@@ -44,21 +44,67 @@ void _copy(Number *_lhs, const Number *_rhs);
 void _add( const Number *_lhs, const Number *_rhs, Number *_res, int
 _byte_shift, int _bit_shift);
 
-/**
- * Shift right, enlarges the number
- * @param _ptr
- * @param _amount
- * @param _res
- */
-void _shift_right(const Number *_ptr, unsigned int _amount, Number *_res);
 
 /**
- * Shift left, reduces the number
- * @param _ptr
- * @param _amount
+ *
+ * @param _lhs
+ * @param _rhs
  * @param _res
  */
-void _shift_left(const Number *_ptr, unsigned int _amount, Number *_res);
+void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,
+		  int bits);
+
+///**
+// *
+// * @param _ptr
+// * @return
+// */
+//int _find_msb(const Number *_ptr);
+//
+///**
+// *
+// * @param _lhs
+// * @param _rhs
+// * @return
+// */
+//int _find_distance(const Number *_lhs, const Number *_rhs);
+//
+///**
+// * Shift right, enlarges the number
+// * @param _ptr
+// * @param _amount
+// * @param _res
+// */
+//void _shift_right(const Number *_ptr, unsigned int _amount, Number *_res);
+//
+//
+///**
+// *
+// * @param _ptr
+// * @param _bytes
+// * @param _bits
+// * @param _res
+// */
+//void _shift_left(const Number *_ptr, unsigned int _bytes, unsigned int _bits,
+//				 Number *_res);
+
+/**
+ *
+ * @param _lhs
+ * @param _rhs
+ * @return
+ */
+int gt(const Number *_lhs, const Number *_rhs);
+
+/**
+ *
+ * @param _lhs
+ * @param _rhs
+ * @return
+ */
+int ge(const Number *_lhs, const Number *_rhs);
+
+
 
 /**
  * long multiplication of two Numbers
