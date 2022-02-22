@@ -62,6 +62,7 @@ _byte_shift, int _bit_shift) {
   const uint8_t *ptr_l = _lhs->_ptr, *ptr_r = _rhs->_ptr;
   uint8_t *ptr_res = _res->_ptr;
   _res->_length = max_length;
+  //printf("max length: %d\n", max_length);
   for (int i = 0; i < max_length && (i + _byte_shift < _DEFAULT_SIZE);
 	   ++i) {
 	if (i - _byte_shift < 0) {
@@ -224,7 +225,7 @@ int ge(const Number *_lhs, const Number *_rhs){
  * @param lhs
  * @Complexity: O(log^2(n))
  */
-void _mult(const Number *_lhs, const Number *_rhs, Number *_res) {
+void _mult(const Number *_lhs, const Number * _rhs, Number *_res) {
   int mask;
   for (int i = 0; i < _lhs->_length; ++i) {
 	mask = 1;
@@ -331,6 +332,16 @@ void _modulo(const Number *_lhs, const Number *_rhs, Number *_res){
   _sub(_lhs, &_ml, _res, 0 ,0);
 }
 
+int _find_msb(uint8_t a){
+  int mask = 1, msb = 0;
+  for (int i = 0; i < _BASE_UNIT; ++i){
+	if ((a & mask) != 0 ){
+	  msb = i;
+	}
+	mask = mask + mask;
+  }
+  return msb;
+}
 /**
  * The modular exponentiation (_exp_base)**(_exp) mod _base
  * @param _base
@@ -339,9 +350,41 @@ void _modulo(const Number *_lhs, const Number *_rhs, Number *_res){
  * @param _res
  * @Comlexitiy O(log^3(n))
  */
-void _modular_exp(const Number *_base, const Number *_exp, const Number
-*_exp_base, Number
-				  *_res);
+void _modular_exp(const Number
+				  *_exp_base, const Number *_exp, const Number *_base , Number
+				  *_res){
+
+  Number temp;
+  _res->_ptr[0] = 1;
+  _res->_length = 1;
+  int msb, mask;
+  for (int i = _exp->_length-1; i >= 0; --i){
+	//printf("iter %d\n", i );
+	msb = _find_msb(_exp->_ptr[i]);
+	//printf("msb %d\n", msb);
+	mask = 1 << msb;
+	for (int j = msb; j >=0; --j){
+	 // printf("	inner iter %d\n", j);
+	  _copy(&temp, _res);
+	  _init(_res);
+	  _mult(&temp, &temp, _res);
+	  _copy(&temp, _res);
+	  _init(_res);
+	  _modulo(&temp, _base, _res);
+
+	  if ((_exp->_ptr[i] & mask) != 0){
+		//_copy(&temp, _res);
+		_copy(&temp, _res);
+		_init(_res);
+		_mult(_exp_base, &temp, _res);
+		_copy(&temp, _res);
+		_init(_res);
+		_modulo(&temp, _base, _res);
+	  }
+	  mask = mask >> 1;
+	}
+  }
+}
 
 /**
  * Compose a number to the form (u*2^s) where u is odd
