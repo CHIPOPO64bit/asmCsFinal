@@ -1,9 +1,6 @@
 #include "modulo.h"
 #include <stdlib.h>
 #include <stdio.h>
-#define _CARRY_MASK 255
-#define _CARRY_MASK_LENGTH 8
-#define _BASE_UNIT 8
 
 /**
  * TODO: MULT is implemented!!!
@@ -12,7 +9,7 @@
 
 /**
  * init number
- * @param _ptr
+ * @param _ptr number pointer
  */
 void _init(Number *_ptr) {
   for (int i = 0; i < _DEFAULT_SIZE; ++i) {
@@ -22,7 +19,7 @@ void _init(Number *_ptr) {
 }
 /**
  * prints _ptr
- * @param _ptr
+ * @param _ptr number pointer
  */
 void _print_number(const Number *_ptr){
   for (int i = _ptr->_length - 1; i >= 0 ; --i){
@@ -32,10 +29,7 @@ void _print_number(const Number *_ptr){
 }
 
 /**
- * max
- * @param a
- * @param b
- * @return
+ * @return max(a,b)
  */
 int _max(int a, int b) {
   if (a > b) {
@@ -45,10 +39,7 @@ int _max(int a, int b) {
 }
 
 /**
- * min
- * @param a
- * @param b
- * @return
+ * @return min(a,b)
  */
 int _min(int a, int b) {
   if (a > b) {
@@ -59,42 +50,44 @@ int _min(int a, int b) {
 
 /**
  * addition of two Numbers
- * @param rhs
- * @param lhs
+ * @param _byte_shift shift rhs <> bytes
+ * @param _bit_shift shift rhs <> bits
  * @Complexity: O(log(n))
  */
 void _add(const Number *_lhs, const Number *_rhs, Number *_res, int
 _byte_shift, int _bit_shift) {
-  //printf("bit shift %d\n", _bit_shift);
-//  printf("\nnumbers byte: %d bit: %d\n", _byte_shift, _bit_shift);
-//  _print_number(_lhs);
-//  _print_number(_rhs);
+
+  Number _rhs_copied;
+  _copy(&_rhs_copied, _rhs);
+
+  // helper variables, unsigned for two's complement addition
   unsigned short carry = 0;
   unsigned short temp;
   int max_length = _max(_lhs->_length, _rhs->_length + _byte_shift);
-  const uint8_t *ptr_l = _lhs->_ptr, *ptr_r = _rhs->_ptr;
+  const uint8_t *ptr_l = _lhs->_ptr, *ptr_r = _rhs_copied._ptr;
   uint8_t *ptr_res = _res->_ptr;
   _res->_length = max_length;
-  //printf("max length: %d\n", max_length);
+
+  // add each digit
   for (int i = 0; i < max_length && (i + _byte_shift < _DEFAULT_SIZE);
 	   ++i) {
+	// zero padded case
 	if (i - _byte_shift < 0) {
 	  temp = (short)ptr_l[i];
 	} else {
-//	  printf("ptr_l: %d ptr_r: %d carry: %d\n", ptr_l[i],
-//			 ptr_r[i-_byte_shift], carry);
+	  // compute the addition result
 	  temp = (unsigned short)((((unsigned short)ptr_l[i]) +(unsigned short)
 		  (ptr_r[i-_byte_shift] << _bit_shift) +(unsigned short) carry));
-//	  printf("ptr_r, shifted : %u i-byte_shift %d \n", ptr_r[i-_byte_shift],
-//			i-_byte_shift );
+
 	}
-	//printf("temp %d %d\n", temp, (uint8_t) temp);
 	ptr_res[i] = (uint8_t)temp;
-//	printf("temp %d\n", temp);
+
+	// the carry bits
 	carry = (temp & (~_CARRY_MASK)) >> (_CARRY_MASK_LENGTH);
   }
+  // use carry
   if (max_length < _DEFAULT_SIZE && carry) {
-//	printf("hey max_length: %d\n", max_length);
+
 	ptr_res[max_length] = carry;
 	_res->_length = max_length + 1;
   }
@@ -102,15 +95,17 @@ _byte_shift, int _bit_shift) {
 
 
 /**
- *
- * @param _ptr
- * @param _res
+ * computes -number
+ * @param _ptr number
+ * @param _res stores the result in _res
  */
 void _neg(const Number *_ptr, Number *_res){
   _res->_length  = _ptr->_length;
+  // not
   for (unsigned int i = 0; i < _DEFAULT_SIZE; ++i){
 	_res->_ptr[i] = ~(_ptr->_ptr[i]);
   }
+  // add 1
   _res->_length = _DEFAULT_SIZE;
   Number _one;
   _init(&_one);
@@ -120,10 +115,8 @@ void _neg(const Number *_ptr, Number *_res){
 }
 
 /**
- *
- * @param _lhs
- * @param _rhs
- * @param _res
+ * subtraction _lhs - _rhs
+ * @param _res stores the result in _res
  */
 void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,
 		  int bits){
@@ -141,8 +134,6 @@ void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,
 
 /**
  * copy _rhs into _lhs by value
- * @param _lhs
- * @param _rhs
  */
 void _copy(Number *_lhs, const Number *_rhs) {
   _lhs->_length = _rhs->_length;
@@ -152,14 +143,10 @@ void _copy(Number *_lhs, const Number *_rhs) {
 }
 
 /**
- *
- * @param _lhs
- * @param _rhs
  * @return _lhs > _rhs
  */
 int gt(const Number *_lhs, const Number *_rhs){
-
-  //printf("length lhs: %d length rhs: %d\n", _lhs->_length,_rhs->_length);
+  // trivial cases
   if (_rhs->_length > _lhs->_length){
 	return 0;
   } else if (_rhs->_length < _lhs->_length){
@@ -168,9 +155,8 @@ int gt(const Number *_lhs, const Number *_rhs){
   if (_rhs->_length == 0){
 	return 0;
   }
-
+  // radix comparison
   for (int i = _rhs->_length-1; i >= 0; --i){
-	//printf("before sigsegv %d\n", i);
 	if (_rhs->_ptr[i] < _lhs->_ptr[i]){
 	  return 1;
 	} else if (_rhs->_ptr[i] > _lhs->_ptr[i]){
@@ -181,12 +167,10 @@ int gt(const Number *_lhs, const Number *_rhs){
 }
 
 /**
- * _lhs >= _rhs
- * @param _lhs
- * @param _rhs
- * @return
+ * @return _lhs >= _rhs
  */
 int ge(const Number *_lhs, const Number *_rhs){
+  // trivial cases
   if (_rhs->_length > _lhs->_length){
 	return 0;
   } else if (_rhs->_length < _lhs->_length){
@@ -195,6 +179,7 @@ int ge(const Number *_lhs, const Number *_rhs){
   if (_rhs->_length  == 0){
 	return 1;
   }
+  // radix comparison
   for (int i = _rhs->_length-1; i >= 0; --i){
 	if (_rhs->_ptr[i] < _lhs->_ptr[i]){
 	  return 1;
@@ -205,101 +190,33 @@ int ge(const Number *_lhs, const Number *_rhs){
   return 1;
 }
 
-///**
-// * Shift right, enlarges the number
-// * @param _ptr
-// * @param _amount
-// * @param _res
-// */
-//void _shift_right(const Number *_ptr, unsigned int _amount, Number *_res){
-//
-//}
-//
-///**
-// *
-// * @param _ptr
-// * @param _bytes
-// * @param _bits
-// * @param _res
-// */
-//void _shift_left(const Number *_ptr, unsigned int _bytes, unsigned int _bits,
-//				 Number *_res){
-//  short temp;
-//  for (int i = (int)_ptr->_length - 1; i >= 0; --i){
-//	temp = (short)(((short)_ptr->_ptr[i])<<_bits);
-//	_res->_ptr[i+_bytes] = (uint8_t) temp;
-//	if (i+_bytes+1 < _DEFAULT_SIZE){
-//	  _res->_ptr[i+_bytes+1] =   _res->_ptr[i+_bytes+1]  | (temp &
-//		  (~_CARRY_MASK)) << _CARRY_MASK_LENGTH;
-//	}
-//
-//  }
-//
-//}
+
 
 /**
- * Division of two Numbers
- * @param rhs
- * @param lhs
+ * Division (integral) of two Numbers _lhs / _rhs
  * @Complexity: O(log^2(n))
  */
-void _mult(const Number *_lhs, const Number * _rhs, Number *_res) {
+void _mult(const Number *_lhs, const Number * _rhs, Number * restrict _res) {
   int mask;
-  Number temp;
+  // scan the bits and add the shifted _rhs accordingly
   for (int i = 0; i < _lhs->_length; ++i) {
 	mask = 1;
+	// scan the bits
 	for (int j = 0; j < _BASE_UNIT; ++j) {
 	  if ((_lhs->_ptr[i] & mask) != 0) {
-//		printf("mask %d\n", mask);
-		_copy(&temp, _res);
-		_init(_res);
-//		printf("call %d\n", j);
-		_add(&temp, _rhs, _res, i, j);
+		_add(_res, _rhs, _res, i, j);
 	  }
 	  mask += mask;
 	}
   }
 }
 
-///**
-// *
-// * @param _ptr
-// * @return
-// */
-//int _find_msb(const Number *_ptr){
-//  if (_ptr->_length == 0){
-//	return 0;
-//  }
-//  int offset = 0, mask = 1;
-//  for (int i = 0; i < _BASE_UNIT; ++i){
-//	if ((mask & _ptr->_ptr[_ptr-> _length - 1]) != 0){
-//	  offset = i;
-//	}
-//	mask = mask + mask;
-//  }
-//  return _BASE_UNIT*(_ptr->_length - 1) + offset;
-//}
-// A A A A
-// B B B B B B B
-///**
-// *
-// * @param _lhs
-// * @param _rhs
-// * @return
-// */
-//int _find_distance(const Number *_lhs, const Number *_rhs){
-//  int power_lhs = _find_msb(_lhs);
-//  int power_rhs = _find_msb(_rhs);
-//  return power_lhs - power_rhs;
-//}
-//
+
 
 /**
- *
- * @param _lhs
- * @param _rhs
- * @param _q_y
- * @param _res
+ * helper method for divide, computes the quotient in _res
+ * @param _q_y helper variable
+ * @param _res quotient
  */
 void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y,
 				 Number *_res){
@@ -310,29 +227,29 @@ void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y,
 	return;
   }
 
+  // copy elements
   Number _r_temp, _comp, _one;
   _init(&_r_temp);
   _init(&_comp);
   _init(&_one);
   _add(_rhs, _rhs, &_r_temp, 0, 0);
+
+  // compute _lhs / 2_rhs
   _div_helper(_lhs, &_r_temp, _q_y, _res);
-  _add(_res, _res, _res,  0 , 0);
+  _copy(&_r_temp, _res);
+  _add(_res, &_r_temp, _res,  0 , 0);
   _add(_q_y, _rhs, &_comp, 0, 0);
   if (ge(_lhs, &_comp)){ // at least one more factor
-
 	_add(_q_y, _rhs, _q_y, 0, 0);
 	_one._ptr[0] = 1;
 	_one._length = 1;
 	_add(_res, &_one, _res, 0, 0);
 
   }
-
-
 }
+
 /**
  * long division of two Numbers _lhs / _rhs
- * @param rhs
- * @param lhs
  * @Complexity: O(log^2(n))
  */
 void _div(const Number *_lhs, const Number *_rhs, Number *_res){
@@ -347,10 +264,7 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res){
 }
 
 /**
- * Modulo of two numbers
- * @param _lhs
- * @param _rhs
- * @param _res
+ * Modulo of two numbers _lhs mod _rhs. stored in _res
  * @Complexity: O(log^2(n))
  */
 void _modulo(const Number *_lhs, const Number *_rhs, Number *_res){
@@ -362,9 +276,8 @@ void _modulo(const Number *_lhs, const Number *_rhs, Number *_res){
 }
 
 /**
- *
- * @param a
- * @return
+ * find the msb bit of an integer
+ * @return the msb index
  */
 int _find_msb(uint8_t a){
   int mask = 1, msb = 0;
@@ -380,73 +293,73 @@ int _find_msb(uint8_t a){
 
 
 /**
- * The modular exponentiation (_exp_base)**(_exp) mod _base
- * @param _base
- * @param _exp
- * @param _exp_base
- * @param _res
+ * The modular exponentiation (_exp_base)**(_exp) mod _base. Stored in _res
  * @Comlexitiy O(log^3(n))
  */
 void _modular_exp(const Number
 				  *_exp_base, const Number *_exp, const Number *_base , Number
 				  *_res){
-
-  Number temp, _r, _one;
-  _init(&_r);
-  _init(&_one);
-  _one._ptr[0] = 1;
-  _one._length  = 1;
+  // temps
+  Number temp;
   _res->_ptr[0] = 1;
   _res->_length = 1;
   int msb, mask, bits;
+
+  // scan each bit, greedily
   for (int i = _exp->_length-1; i >= 0; --i){
-
-
 	msb = _find_msb(_exp->_ptr[i]);
-
-
 	bits  = _BASE_UNIT-1;
 	if (i == _exp->_length - 1){
 	  bits = msb;
 	}
 	mask = 1 << bits;
 	for (int j = bits; j >=0; --j){
-
-	  _copy(&temp, &_r);
-	  _init(&_r);
-	  _add(&temp, &temp, &_r, 0 ,0);
-
-
+	  // compute _res**2
 	  _copy(&temp, _res);
-
-
 	  _init(_res);
-
-
 	  _mult(&temp, &temp, _res);
-
 	  _copy(&temp, _res);
 	  _init(_res);
-
 	  _modulo(&temp, _base, _res);
+
+	  // mult by _rhs if needed
 	  if ((_exp->_ptr[i] & mask) != 0){
-		_copy(&temp, &_r);
-		_init(&_r);
-		_add(&temp, &_one, &_r, 0 ,0);
 
 		_copy(&temp, _res);
 		_init(_res);
-
 		_mult(_exp_base, &temp, _res);
 
 		_copy(&temp, _res);
 		_init(_res);
 		_modulo(&temp, _base, _res);
-
 	  }
 	  mask = mask >> 1;
 	}
   }
+}
+//
+/**
+ * shift right
+ * @param _ptr
+ * @param _bytes_shift
+ * @param _bits_shift
+ */
+void _shift_right(const Number *_ptr, Number *_res, int _bytes_shift, int
+_bits_shift){
+  short temp;
+  unsigned int length = _ptr->_length;
+  for (int i = 0; i <_ptr->_length - _bytes_shift;  ++i){
+	temp = _ptr->_ptr[i+_bytes_shift];
+	_res->_ptr[i] = (temp >> _bits_shift);
+	if ( i > 0){
+	  _res->_ptr[i-1] =  _res->_ptr[i-1]  | ((temp & ((1 << _bits_shift) -
+		  1)) << (_BASE_UNIT - _bits_shift));
+	}
+	if (_res->_ptr[i] != 0 ){
+	  length = i;
+	}
+  }
+  _res->_length = length;
 }
 
 /**
@@ -456,7 +369,23 @@ void _modular_exp(const Number
  * @param _exp
  * @Complexity O(log(n))
  */
-void _compose(const Number *_ptr, Number *_u, Number *_exp);
+void _compose(const Number *_ptr, Number *_u, Number *_exp){
+  int mask;
+  int _res = 0;
+  for (int i = 0; i < _ptr->_length; ++i){
+	mask = 1;
+	for (int j = 0; j < _BASE_UNIT; ++j){
+	  if ((_ptr->_ptr[i] & mask) != 0){
+		break;
+	  }
+	  ++_res;
+	  mask <<= 1;
+	}
+  }
+  int _start = _res / _BASE_UNIT, _sub_start = _res % _BASE_UNIT;
+  _exp->_ptr[_start] = 1 << (_sub_start);
+  _shift_right(_ptr, _u, _start, _sub_start);
+}
 
 /**
  * Find s,t such that a*s+b*t=gcd(a,b)
