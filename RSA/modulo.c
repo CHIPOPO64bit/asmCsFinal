@@ -20,6 +20,16 @@ void _init(Number *_ptr) {
   }
   _ptr->_length = 0;
 }
+/**
+ * prints _ptr
+ * @param _ptr
+ */
+void _print_number(const Number *_ptr){
+  for (int i = _ptr->_length - 1; i >= 0 ; --i){
+	printf("%d ", _ptr->_ptr[i]);
+  }
+  printf("\n");
+}
 
 /**
  * max
@@ -56,8 +66,11 @@ int _min(int a, int b) {
 void _add(const Number *_lhs, const Number *_rhs, Number *_res, int
 _byte_shift, int _bit_shift) {
   //printf("bit shift %d\n", _bit_shift);
-  int carry = 0;
-  short temp;
+//  printf("\nnumbers byte: %d bit: %d\n", _byte_shift, _bit_shift);
+//  _print_number(_lhs);
+//  _print_number(_rhs);
+  unsigned short carry = 0;
+  unsigned short temp;
   int max_length = _max(_lhs->_length, _rhs->_length + _byte_shift);
   const uint8_t *ptr_l = _lhs->_ptr, *ptr_r = _rhs->_ptr;
   uint8_t *ptr_res = _res->_ptr;
@@ -68,15 +81,20 @@ _byte_shift, int _bit_shift) {
 	if (i - _byte_shift < 0) {
 	  temp = (short)ptr_l[i];
 	} else {
-	  //printf("I: %d byte_shift: %d\n", i, i-_byte_shift);
-	  temp = (short)((((short)ptr_l[i]) +(short)
-		  (ptr_r[i-_byte_shift] << _bit_shift) +(short) carry));
+//	  printf("ptr_l: %d ptr_r: %d carry: %d\n", ptr_l[i],
+//			 ptr_r[i-_byte_shift], carry);
+	  temp = (unsigned short)((((unsigned short)ptr_l[i]) +(unsigned short)
+		  (ptr_r[i-_byte_shift] << _bit_shift) +(unsigned short) carry));
+//	  printf("ptr_r, shifted : %u i-byte_shift %d \n", ptr_r[i-_byte_shift],
+//			i-_byte_shift );
 	}
 	//printf("temp %d %d\n", temp, (uint8_t) temp);
 	ptr_res[i] = (uint8_t)temp;
+//	printf("temp %d\n", temp);
 	carry = (temp & (~_CARRY_MASK)) >> (_CARRY_MASK_LENGTH);
   }
   if (max_length < _DEFAULT_SIZE && carry) {
+//	printf("hey max_length: %d\n", max_length);
 	ptr_res[max_length] = carry;
 	_res->_length = max_length + 1;
   }
@@ -227,12 +245,16 @@ int ge(const Number *_lhs, const Number *_rhs){
  */
 void _mult(const Number *_lhs, const Number * _rhs, Number *_res) {
   int mask;
+  Number temp;
   for (int i = 0; i < _lhs->_length; ++i) {
 	mask = 1;
 	for (int j = 0; j < _BASE_UNIT; ++j) {
 	  if ((_lhs->_ptr[i] & mask) != 0) {
-		//printf("mask %d\n", mask);
-		_add(_res, _rhs, _res, i, j);
+//		printf("mask %d\n", mask);
+		_copy(&temp, _res);
+		_init(_res);
+//		printf("call %d\n", j);
+		_add(&temp, _rhs, _res, i, j);
 	  }
 	  mask += mask;
 	}
@@ -272,6 +294,13 @@ void _mult(const Number *_lhs, const Number * _rhs, Number *_res) {
 //}
 //
 
+/**
+ *
+ * @param _lhs
+ * @param _rhs
+ * @param _q_y
+ * @param _res
+ */
 void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y,
 				 Number *_res){
 
@@ -332,6 +361,11 @@ void _modulo(const Number *_lhs, const Number *_rhs, Number *_res){
   _sub(_lhs, &_ml, _res, 0 ,0);
 }
 
+/**
+ *
+ * @param a
+ * @return
+ */
 int _find_msb(uint8_t a){
   int mask = 1, msb = 0;
   for (int i = 0; i < _BASE_UNIT; ++i){
@@ -342,6 +376,9 @@ int _find_msb(uint8_t a){
   }
   return msb;
 }
+
+
+
 /**
  * The modular exponentiation (_exp_base)**(_exp) mod _base
  * @param _base
@@ -354,32 +391,58 @@ void _modular_exp(const Number
 				  *_exp_base, const Number *_exp, const Number *_base , Number
 				  *_res){
 
-  Number temp;
+  Number temp, _r, _one;
+  _init(&_r);
+  _init(&_one);
+  _one._ptr[0] = 1;
+  _one._length  = 1;
   _res->_ptr[0] = 1;
   _res->_length = 1;
-  int msb, mask;
+  int msb, mask, bits;
   for (int i = _exp->_length-1; i >= 0; --i){
-	//printf("iter %d\n", i );
-	msb = _find_msb(_exp->_ptr[i]);
-	//printf("msb %d\n", msb);
-	mask = 1 << msb;
-	for (int j = msb; j >=0; --j){
-	 // printf("	inner iter %d\n", j);
-	  _copy(&temp, _res);
-	  _init(_res);
-	  _mult(&temp, &temp, _res);
-	  _copy(&temp, _res);
-	  _init(_res);
-	  _modulo(&temp, _base, _res);
 
+
+	msb = _find_msb(_exp->_ptr[i]);
+
+
+	bits  = _BASE_UNIT-1;
+	if (i == _exp->_length - 1){
+	  bits = msb;
+	}
+	mask = 1 << bits;
+	for (int j = bits; j >=0; --j){
+
+	  _copy(&temp, &_r);
+	  _init(&_r);
+	  _add(&temp, &temp, &_r, 0 ,0);
+
+
+	  _copy(&temp, _res);
+
+
+	  _init(_res);
+
+
+	  _mult(&temp, &temp, _res);
+
+	  _copy(&temp, _res);
+	  _init(_res);
+
+	  _modulo(&temp, _base, _res);
 	  if ((_exp->_ptr[i] & mask) != 0){
-		//_copy(&temp, _res);
+		_copy(&temp, &_r);
+		_init(&_r);
+		_add(&temp, &_one, &_r, 0 ,0);
+
 		_copy(&temp, _res);
 		_init(_res);
+
 		_mult(_exp_base, &temp, _res);
+
 		_copy(&temp, _res);
 		_init(_res);
 		_modulo(&temp, _base, _res);
+
 	  }
 	  mask = mask >> 1;
 	}
