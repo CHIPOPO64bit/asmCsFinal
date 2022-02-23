@@ -18,10 +18,10 @@
  * only one byte.
  */
 
-typedef struct Number{
+typedef struct Number {
   uint8_t _ptr[_DEFAULT_SIZE];
   unsigned int _length;
-}Number;
+} Number;
 
 /**
  * init number
@@ -83,14 +83,11 @@ int gt(const Number *_lhs, const Number *_rhs);
  */
 int ge(const Number *_lhs, const Number *_rhs);
 
-
-
 /**
  * Division (integral) of two Numbers _lhs / _rhs
  * @Complexity: O(log^2(n))
  */
-void _mult(const Number *_lhs, const Number * _rhs, Number * restrict _res);
-
+void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res);
 
 /**
  * helper method for divide, computes the quotient in _res
@@ -118,13 +115,12 @@ void _modulo(const Number *_lhs, const Number *_rhs, Number *_res);
  */
 int _find_msb(uint8_t a);
 
-
 /**
  * The modular exponentiation (_exp_base)**(_exp) mod _base. Stored in _res
  * @Comlexitiy O(log^3(n))
  */
 void _modular_exp(const Number
-				  *_exp_base, const Number *_exp, const Number *_base , Number
+				  *_exp_base, const Number *_exp, const Number *_base, Number
 				  *_res);
 
 /**
@@ -164,10 +160,5 @@ void _extended_euclid(const Number *_a, const Number *_b, Number *_s, Number
  * @Complexity O(log^3(n))
  */
 void _inverse(const Number *_ptr, const Number *_base, Number *_res);
-
-
-
-
-
 
 #endif //RSA__MODULO_H_
