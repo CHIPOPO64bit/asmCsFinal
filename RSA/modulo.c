@@ -1,5 +1,4 @@
 #include "modulo.h"
-#include <stdlib.h>
 #include <stdio.h>
 
 /**
@@ -63,13 +62,14 @@ _byte_shift, int _bit_shift) {
   // helper variables, unsigned for two's complement addition
   unsigned short carry = 0;
   unsigned short temp;
-  int max_length = _max(_lhs->_length, _rhs->_length + _byte_shift);
+  int max_length = _min(_max(_lhs->_length, _rhs->_length + _byte_shift),
+					   _DEFAULT_SIZE);
   const uint8_t *ptr_l = _lhs->_ptr, *ptr_r = _rhs_copied._ptr;
   uint8_t *ptr_res = _res->_ptr;
   _res->_length = max_length;
 
   // add each digit
-  for (int i = 0; i < max_length && (i + _byte_shift < _DEFAULT_SIZE);
+  for (int i = 0; i < max_length;
 	   ++i) {
 	// zero padded case
 	if (i - _byte_shift < 0) {
@@ -120,8 +120,10 @@ void _neg(const Number *_ptr, Number *_res) {
 void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,
 		  int bits) {
   Number _copied;
+
   _copy(&_copied, _rhs);
   _neg(_rhs, &_copied);
+  _init(_res);
   _add(_lhs, &_copied, _res, bytes, bits);
   _res->_length = 0;
   for (int i = 0; i < _DEFAULT_SIZE; ++i) {
@@ -195,13 +197,16 @@ int ge(const Number *_lhs, const Number *_rhs) {
  */
 void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res) {
   int mask;
+  Number temp;
   // scan the bits and add the shifted _rhs accordingly
   for (int i = 0; i < _lhs->_length; ++i) {
 	mask = 1;
 	// scan the bits
 	for (int j = 0; j < _BASE_UNIT; ++j) {
 	  if ((_lhs->_ptr[i] & mask) != 0) {
-		_add(_res, _rhs, _res, i, j);
+		_copy(&temp, _res);
+		_init(_res);
+		_add(&temp, _rhs, _res, i, j);
 	  }
 	  mask += mask;
 	}
@@ -382,15 +387,42 @@ void _compose(const Number *_ptr, Number *_u, Number *_exp) {
 }
 
 /**
- * Find s,t such that a*s+b*t=gcd(a,b)
+ * Find s,t such that a*s+b*t=gcd(a,b), assume _a > _b
  * @param _a
  * @param _b
+ * @param _gcd
  * @param _s
  * @param _t
  * @Complexity O(log^3(n))
  */
-void _extended_euclid(const Number *_a, const Number *_b, Number *_s, Number
-*_t);
+void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
+*_s, Number
+*_t){
+  if (_b->_length == 0){
+	_copy(_gcd, _a);
+	_s->_length  = 1;
+	_s->_ptr[0] = 1;
+  } else {
+	Number temp, a_b;
+	_init(&a_b);
+	_init(&temp);
+	_modulo(_a, _b, &temp);
+	//_print_number(&temp);
+	_div(_a, _b, &a_b);
+	_extended_euclid(_b, &temp, _gcd, _s, _t);
+	_init(&temp);
+	//_print_number(_t);
+	//_print_number(&a_b);
+	_mult(_t, &a_b, &temp);
+
+	//printf("temp\n");
+	//_print_number(&temp);
+
+	_sub(_s, &temp, &temp, 0, 0);
+	_copy(_s, _t);
+	_copy(_t, &temp);
+  }
+}
 
 /**
  * Find the multiplicative inverse of _ptr mod _base
@@ -399,6 +431,16 @@ void _extended_euclid(const Number *_a, const Number *_b, Number *_s, Number
  * @param _base
  * @Complexity O(log^3(n))
  */
-void _inverse(const Number *_ptr, const Number *_base, Number *_res);
+void _inverse(const Number *_ptr, const Number *_base, Number *_res){
+  Number t, _gcd, _one, temp;
+  _init(&t);
+  _extended_euclid(_ptr, _base, &_gcd, _res, &t);
+  _print_number(&_gcd);
+  _print_number(_res);
+  _print_number(&t);
+  _copy(&temp, _res);
+  _init(_res);
+  _modulo(&temp, _base, _res);
+}
 
 

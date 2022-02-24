@@ -4,7 +4,6 @@
 
 #ifndef RSA__RSA_H_
 #define RSA__RSA_H_
-
 #include "modulo.h"
 
 /**

@@ -142,15 +142,16 @@ _bits_shift);
 void _compose(const Number *_ptr, Number *_u, Number *_exp);
 
 /**
- * Find s,t such that a*s+b*t=gcd(a,b)
+ * Find s,t such that a*s+b*t=gcd(a,b), assume _a > _b
  * @param _a
  * @param _b
+ * @param _gcd
  * @param _s
  * @param _t
  * @Complexity O(log^3(n))
  */
-void _extended_euclid(const Number *_a, const Number *_b, Number *_s, Number
-*_t);
+void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
+*_s, Number *_t);
 
 /**
  * Find the multiplicative inverse of _ptr mod _base
