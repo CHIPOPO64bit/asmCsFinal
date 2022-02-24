@@ -7,8 +7,8 @@ int main() {
   Number b;
   Number c, s, t;
   Number base;
-  a._length = 1;
-  b._length = 1;
+  a._length = 2;
+  b._length = 0;
   base._length = 0;
   c._length = 0;
   s._length = 0, t._length = 0;
@@ -21,20 +21,12 @@ int main() {
 	t._ptr[i] = 0;
 	base._ptr[i] = 0;
   }
-  a._ptr[0] = 4;
-  b._ptr[0] = 123;
-//	_mult(&a, &b, &c);
-//
-//  _print_number(&c);
-  _inverse(&a, &b, &c);
+  a._ptr[0] = 0;
+  a._ptr[1] = 248;
 
+  _compose(&a, &b, &c);
+  _print_number(&b);
   _print_number(&c);
-//  _print_number(&base);
-//  _print_number(&s);
-//  _print_number(&t);
-
-
-  //_shift_right(&a, &c, 3, 0);
 
 
   return 0;
