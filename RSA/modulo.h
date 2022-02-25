@@ -31,6 +31,11 @@ typedef struct Number {
 void Init(Number *_ptr);
 
 /**
+ *  init global variables
+ */
+void init_program();
+
+/**
  * prints _ptr
  * @param _ptr number pointer
  * @Complexity O(log(n))

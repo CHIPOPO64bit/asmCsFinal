@@ -2,6 +2,13 @@
 #include <stdio.h>
 
 /**
+ * Global variables. Makes the code much more efficient in this case.
+ * Since it is converted to asm, there are only advantages.
+ */
+Number _one;
+
+
+/**
  * init number
  * @param _ptr number pointer
  * @Complexity O(log(n))
@@ -11,6 +18,15 @@ void Init(Number *_ptr) {
 	_ptr->_ptr[i] = 0;
   }
   _ptr->_length = 0;
+}
+
+/**
+ *  init global variables
+ */
+void init_program(){
+  Init(&_one);
+  _one._ptr[0] = 1;
+  _one._length = 1;
 }
 
 /**
@@ -54,15 +70,20 @@ int _min(int a, int b) {
 void _add(const Number *_lhs, const Number *_rhs, Number *_res, int
 _byte_shift, int _bit_shift) {
 
-  Number _rhs_copied;
-  _copy(&_rhs_copied, _rhs);
+  Number _rhs_copied, _lhs_copied;
+  // the pointers are not of type restrict
+  _copy(&_rhs_copied, _rhs), _copy(&_lhs_copied, _lhs);
+
+  Init(_res);
+
 
   // helper variables, unsigned for two's complement addition
   unsigned short carry = 0;
   unsigned short temp;
-  int max_length = _min(_max(_lhs->_length, _rhs->_length + _byte_shift),
+  int max_length = _min(_max(_lhs_copied._length, _rhs_copied._length +
+  _byte_shift),
 						_DEFAULT_SIZE);
-  const uint8_t *ptr_l = _lhs->_ptr, *ptr_r = _rhs_copied._ptr;
+  const uint8_t *ptr_l = _lhs_copied._ptr, *ptr_r = _rhs_copied._ptr;
   uint8_t *ptr_res = _res->_ptr;
   _res->_length = max_length;
 
@@ -105,10 +126,6 @@ void _neg(const Number *_ptr, Number *_res) {
   }
   // add 1
   _res->_length = _DEFAULT_SIZE;
-  Number _one;
-  Init(&_one);
-  _one._ptr[0] = 1;
-  _one._length = 1;
   _add(&_one, _res, _res, 0, 0);
 }
 
@@ -120,10 +137,8 @@ void _neg(const Number *_ptr, Number *_res) {
 void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,
 		  int bits) {
   Number _copied;
-
   _copy(&_copied, _rhs);
   _neg(_rhs, &_copied);
-  Init(_res);
   _add(_lhs, &_copied, _res, bytes, bits);
   _res->_length = 0;
   for (int i = 0; i < _DEFAULT_SIZE; ++i) {
@@ -198,18 +213,17 @@ int ge(const Number *_lhs, const Number *_rhs) {
  * Division (integral) of two Numbers _lhs / _rhs
  * @Complexity: O(log^2(n))
  */
-void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res) {
+void _mult(const Number *_lhs, const Number *_rhs, Number *_res) {
+  Number _lhs_copied, _rhs_copied;
+  _copy(&_lhs_copied, _lhs), _copy(&_rhs_copied, _rhs), Init(_res);;
   int mask;
-  Number temp;
   // scan the bits and add the shifted _rhs accordingly
-  for (int i = 0; i < _lhs->_length; ++i) {
+  for (int i = 0; i < _lhs_copied._length; ++i) {
 	mask = 1;
 	// scan the bits
 	for (int j = 0; j < _BASE_UNIT; ++j) {
-	  if ((_lhs->_ptr[i] & mask) != 0) {
-		_copy(&temp, _res);
-		Init(_res);
-		_add(&temp, _rhs, _res, i, j);
+	  if ((_lhs_copied._ptr[i] & mask) != 0) {
+		_add(_res, &_rhs_copied, _res, i, j);
 	  }
 	  mask += mask;
 	}
@@ -217,37 +231,31 @@ void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res) {
 }
 
 /**
- * helper method for divide, computes the quotient in _res
+ * Helper method for divide, computes the quotient in _res
+ * A greedy method.
  * @param _q_y helper variable
  * @param _res quotient
  * @Complexity O(log(n^2))
  */
-void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y,
+void _div_helper(const Number *_lhs, const Number *_rhs, Number *restrict _q_y,
 				 Number *_res) {
-
   if (gt(_rhs, _lhs)
 	  || (((_rhs->_ptr[_DEFAULT_SIZE - 1]) & (1 << (_BASE_UNIT - 1)))
 		  != 0)) {
 	return;
   }
   // copy elements
-  Number _r_temp, _comp, _one;
-  Init(&_r_temp);
-  Init(&_comp);
-  Init(&_one);
-  _add(_rhs, _rhs, &_r_temp, 0, 0);
+  Number temp;
+  _add(_rhs, _rhs, &temp, 0, 0);
+  // compute _lhs / 2*_rhs
+  _div_helper(_lhs, &temp, _q_y, _res);
 
-  // compute _lhs / 2_rhs
-  _div_helper(_lhs, &_r_temp, _q_y, _res);
-  _copy(&_r_temp, _res);
-  _add(_res, &_r_temp, _res, 0, 0);
-  _add(_q_y, _rhs, &_comp, 0, 0);
-  if (ge(_lhs, &_comp)) { // at least one more factor
+  _add(_res, _res, _res, 0, 0);
+
+  _add(_q_y, _rhs, &temp, 0, 0);
+  if (ge(_lhs, &temp)) { // at least one more factor
 	_add(_q_y, _rhs, _q_y, 0, 0);
-	_one._ptr[0] = 1;
-	_one._length = 1;
 	_add(_res, &_one, _res, 0, 0);
-
   }
 }
 
@@ -262,7 +270,7 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res) {
    * both x and y positive integers
    */
   Number _q_y;
-  Init(&_q_y);
+  Init(&_q_y), Init(_res);
   _div_helper(_lhs, _rhs, &_q_y, _res);
 }
 
@@ -271,11 +279,12 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res) {
  * @Complexity: O(log^2(n))
  */
 void _modulo(const Number *_lhs, const Number *_rhs, Number *_res) {
-  Number _q, _ml;
-  Init(&_q), Init(&_ml);
-  _div(_lhs, _rhs, &_q);
-  _mult(&_q, _rhs, &_ml);
-  _sub(_lhs, &_ml, _res, 0, 0);
+  Number _q, _ml, _lhs_copied, _rhs_copied;
+  _copy(&_lhs_copied, _lhs), _copy(&_rhs_copied, _rhs), Init(_res);
+  _div(&_lhs_copied, &_rhs_copied, &_q);
+  _mult(&_q, &_rhs_copied, &_ml);
+  _sub(&_lhs_copied, &_ml, _res, 0, 0);
+
 }
 
 /**
@@ -301,12 +310,9 @@ int _find_msb(uint8_t a) {
 void _modular_exp(const Number
 				  *_exp_base, const Number *_exp, const Number *_base, Number
 				  *_res) {
-  // temps
-  Number temp;
   _res->_ptr[0] = 1;
   _res->_length = 1;
   int msb, mask, bits;
-
   // scan each bit, greedily
   for (int i = _exp->_length - 1; i >= 0; --i) {
 	msb = _find_msb(_exp->_ptr[i]);
@@ -317,23 +323,12 @@ void _modular_exp(const Number
 	mask = 1 << bits;
 	for (int j = bits; j >= 0; --j) {
 	  // compute _res**2
-	  _copy(&temp, _res);
-	  Init(_res);
-	  _mult(&temp, &temp, _res);
-	  _copy(&temp, _res);
-	  Init(_res);
-	  _modulo(&temp, _base, _res);
-
+	  _mult(_res, _res, _res);
+	  _modulo(_res, _base, _res);
 	  // mult by _rhs if needed
 	  if ((_exp->_ptr[i] & mask) != 0) {
-
-		_copy(&temp, _res);
-		Init(_res);
-		_mult(_exp_base, &temp, _res);
-
-		_copy(&temp, _res);
-		Init(_res);
-		_modulo(&temp, _base, _res);
+		_mult(_exp_base, _res, _res);
+		_modulo(_res, _base, _res);
 	  }
 	  mask = mask >> 1;
 	}
@@ -395,21 +390,17 @@ void _compose(const Number *_ptr, Number *_u, Number *_exp) {
  * @Complexity O(log^3(n))
  */
 void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
-*_s, Number
-					  *_t) {
+*_s, Number *_t) {
   if (_b->_length == 0) {
 	_copy(_gcd, _a);
 	_s->_length = 1;
 	_s->_ptr[0] = 1;
   } else {
-	Number temp, a_b;
-	Init(&a_b);
-	Init(&temp);
+	Number temp;
 	_modulo(_a, _b, &temp);
-	_div(_a, _b, &a_b);
 	_extended_euclid(_b, &temp, _gcd, _s, _t);
-	Init(&temp);
-	_mult(_t, &a_b, &temp);
+	_div(_a, _b, &temp);
+	_mult(_t, &temp, &temp);
 	_sub(_s, &temp, &temp, 0, 0);
 	_copy(_s, _t);
 	_copy(_t, &temp);
@@ -424,15 +415,10 @@ void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
  * @Complexity O(log^3(n))
  */
 void _inverse(const Number *_ptr, const Number *_base, Number *_res) {
-  Number t, _gcd, temp;
+  Number t, _gcd;
   Init(&t);
   _extended_euclid(_ptr, _base, &_gcd, _res, &t);
-  _print_number(&_gcd);
-  _print_number(_res);
-  _print_number(&t);
-  _copy(&temp, _res);
-  Init(_res);
-  _modulo(&temp, _base, _res);
+  _modulo(_res, _base, _res);
 }
 
 
