@@ -28,7 +28,7 @@ typedef struct Number {
  * @param _ptr number pointer
  * @Complexity O(log(n))
  */
-void _init(Number *_ptr);
+void Init(Number *_ptr);
 
 /**
  * prints _ptr

@@ -6,7 +6,7 @@
  * @param _ptr number pointer
  * @Complexity O(log(n))
  */
-void _init(Number *_ptr) {
+void Init(Number *_ptr) {
   for (int i = 0; i < _DEFAULT_SIZE; ++i) {
 	_ptr->_ptr[i] = 0;
   }
@@ -106,7 +106,7 @@ void _neg(const Number *_ptr, Number *_res) {
   // add 1
   _res->_length = _DEFAULT_SIZE;
   Number _one;
-  _init(&_one);
+  Init(&_one);
   _one._ptr[0] = 1;
   _one._length = 1;
   _add(&_one, _res, _res, 0, 0);
@@ -123,7 +123,7 @@ void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,
 
   _copy(&_copied, _rhs);
   _neg(_rhs, &_copied);
-  _init(_res);
+  Init(_res);
   _add(_lhs, &_copied, _res, bytes, bits);
   _res->_length = 0;
   for (int i = 0; i < _DEFAULT_SIZE; ++i) {
@@ -208,7 +208,7 @@ void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res) {
 	for (int j = 0; j < _BASE_UNIT; ++j) {
 	  if ((_lhs->_ptr[i] & mask) != 0) {
 		_copy(&temp, _res);
-		_init(_res);
+		Init(_res);
 		_add(&temp, _rhs, _res, i, j);
 	  }
 	  mask += mask;
@@ -232,9 +232,9 @@ void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y,
   }
   // copy elements
   Number _r_temp, _comp, _one;
-  _init(&_r_temp);
-  _init(&_comp);
-  _init(&_one);
+  Init(&_r_temp);
+  Init(&_comp);
+  Init(&_one);
   _add(_rhs, _rhs, &_r_temp, 0, 0);
 
   // compute _lhs / 2_rhs
@@ -262,7 +262,7 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res) {
    * both x and y positive integers
    */
   Number _q_y;
-  _init(&_q_y);
+  Init(&_q_y);
   _div_helper(_lhs, _rhs, &_q_y, _res);
 }
 
@@ -272,7 +272,7 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res) {
  */
 void _modulo(const Number *_lhs, const Number *_rhs, Number *_res) {
   Number _q, _ml;
-  _init(&_q), _init(&_ml);
+  Init(&_q), Init(&_ml);
   _div(_lhs, _rhs, &_q);
   _mult(&_q, _rhs, &_ml);
   _sub(_lhs, &_ml, _res, 0, 0);
@@ -318,21 +318,21 @@ void _modular_exp(const Number
 	for (int j = bits; j >= 0; --j) {
 	  // compute _res**2
 	  _copy(&temp, _res);
-	  _init(_res);
+	  Init(_res);
 	  _mult(&temp, &temp, _res);
 	  _copy(&temp, _res);
-	  _init(_res);
+	  Init(_res);
 	  _modulo(&temp, _base, _res);
 
 	  // mult by _rhs if needed
 	  if ((_exp->_ptr[i] & mask) != 0) {
 
 		_copy(&temp, _res);
-		_init(_res);
+		Init(_res);
 		_mult(_exp_base, &temp, _res);
 
 		_copy(&temp, _res);
-		_init(_res);
+		Init(_res);
 		_modulo(&temp, _base, _res);
 	  }
 	  mask = mask >> 1;
@@ -403,12 +403,12 @@ void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
 	_s->_ptr[0] = 1;
   } else {
 	Number temp, a_b;
-	_init(&a_b);
-	_init(&temp);
+	Init(&a_b);
+	Init(&temp);
 	_modulo(_a, _b, &temp);
 	_div(_a, _b, &a_b);
 	_extended_euclid(_b, &temp, _gcd, _s, _t);
-	_init(&temp);
+	Init(&temp);
 	_mult(_t, &a_b, &temp);
 	_sub(_s, &temp, &temp, 0, 0);
 	_copy(_s, _t);
@@ -425,13 +425,13 @@ void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
  */
 void _inverse(const Number *_ptr, const Number *_base, Number *_res) {
   Number t, _gcd, temp;
-  _init(&t);
+  Init(&t);
   _extended_euclid(_ptr, _base, &_gcd, _res, &t);
   _print_number(&_gcd);
   _print_number(_res);
   _print_number(&t);
   _copy(&temp, _res);
-  _init(_res);
+  Init(_res);
   _modulo(&temp, _base, _res);
 }
 
