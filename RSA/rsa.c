@@ -2,7 +2,7 @@
 // Created by David Keisar on 2/26/22.
 //
 #include "rsa.h"
-
+#define _PRIME_SIZE 64
 /**
  *
  * @param _ptr
@@ -41,7 +41,11 @@ int _witness(const Number *_ptr, const Number *_base) {
  * @return
  */
 int _miller_rabin(const Number *_ptr, int _iter) {
+
   Number random;
+  if (!_ptr->_length){
+	return 0;
+  }
   for (int i = 0; i < _iter; ++i) {
 	_random(_ptr, &random);
 	if (_witness(&random, _ptr)) {
@@ -52,10 +56,51 @@ int _miller_rabin(const Number *_ptr, int _iter) {
 }
 
 /**
+ * generate a random number
+ * @param _res
+ * @param size
+ */
+void _generate_random(Number *_res, int size){
+
+
+  for (int i = 0; i < size; ++i){
+	_res->_ptr[i] = rand();
+	if (_res->_ptr[i] != 0){
+	  _res->_length = i + 1;
+	}
+  }
+}
+
+/**
+ * generate a prime
+ * @param _res
+ * @param size
+ */
+void _generate_prime(Number *_res, int size){
+
+  int i = 1;
+  while (1){
+	_generate_random(_res, size);
+	_print_number(_res);
+	if (_miller_rabin(_res, 10)){
+	  return;
+	}
+	++i;
+	printf("again %d\n", i);
+  }
+}
+
+/**
  * Generate RSA keys
  * @param length
  * @param _N
  * @param _e
  * @param _d
  */
-void _generate_keys(int length, Number *_N, Number *_e, Number *_d);
+void _generate_keys(int length, Number *_N, Number *_e, Number *_d){
+  Number p, q;
+  _generate_prime(&p, _PRIME_SIZE / _BASE_UNIT);
+  _generate_prime(&q, _PRIME_SIZE / _BASE_UNIT);
+
+
+}

@@ -10,7 +10,7 @@ int main() {
   Number b;
   Number c, s, t;
   Number base;
-  a._length = 2;
+  a._length = 1;
   b._length = 1;
   base._length = 2;
   c._length = 0;
@@ -31,19 +31,25 @@ int main() {
 
 
   init_program();
-  a._ptr[0] = 17;
+  //a._ptr[0] = 1;
+  _generate_prime(&a, 64);
+  _print_number(&a);
 //  printf("i: %d result: %d\n", 17, _miller_rabin(&a, 10));
-  for (int i = 2; i < 256; ++i){
-	a._ptr[0] = i;
-	for (int j = 1; j < 256; ++j){
-	  a._ptr[1] = j;
-	  if (_miller_rabin(&a, 10)){
-		printf("%d %d\n ", i, j);
-		printf("\n");
-	  }
-	}
-	//printf("i: %d result: %d\n", i, _miller_rabin(&a, 10));
-  }
+//  for (int i = 2; i < 256; ++i){
+//	a._ptr[0] = i;
+//	for (int j = 1; j < 256; ++j){
+//	  a._ptr[1] = j;
+//	  if (_miller_rabin(&a, 10)){
+//		printf("%d %d\n ", i, j);
+//		printf("\n");
+//	  }
+//	}
+//	//printf("i: %d result: %d\n", i, _miller_rabin(&a, 10));
+//  }
+
+
+
+
 
 
 

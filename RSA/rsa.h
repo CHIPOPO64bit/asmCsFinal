@@ -24,6 +24,20 @@ int _witness(const Number *_ptr, const Number *_base);
 int _miller_rabin(const Number *_ptr, int _iter);
 
 /**
+ * generate a random number
+ * @param _res
+ * @param size
+ */
+void _generate_random(Number *_res, int size);
+
+/**
+ * generate a prime
+ * @param _res
+ * @param size
+ */
+void _generate_prime(Number *_res, int size);
+
+/**
  * Generate RSA keys
  * @param length
  * @param _N
@@ -31,6 +45,5 @@ int _miller_rabin(const Number *_ptr, int _iter);
  * @param _d
  */
 void _generate_keys(int length, Number *_N, Number *_e, Number *_d);
-
 
 #endif //RSA__RSA_H_

@@ -6,6 +6,8 @@
  * Since it is converted to asm, there are only advantages.
  */
 
+// TODO: assume pointers in add are distinct, and copy outside scope - much
+//  more efficient, and cut the run time.
 
 /**
  * init number
@@ -348,6 +350,7 @@ void _modular_exp(const Number
 	}
   }
 }
+
 
 /**
  * shift right
