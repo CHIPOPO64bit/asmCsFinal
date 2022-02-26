@@ -73,10 +73,7 @@ _byte_shift, int _bit_shift) {
   Number _rhs_copied, _lhs_copied;
   // the pointers are not of type restrict
   _copy(&_rhs_copied, _rhs), _copy(&_lhs_copied, _lhs);
-
   Init(_res);
-
-
   // helper variables, unsigned for two's complement addition
   unsigned short carry = 0;
   unsigned short temp;
