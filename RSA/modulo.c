@@ -1,11 +1,10 @@
 #include "modulo.h"
-#include <stdio.h>
+
 
 /**
  * Global variables. Makes the code much more efficient in this case.
  * Since it is converted to asm, there are only advantages.
  */
-Number _one;
 
 
 /**
@@ -27,6 +26,8 @@ void init_program(){
   Init(&_one);
   _one._ptr[0] = 1;
   _one._length = 1;
+  _neg(&_one, &_minus_one);
+  srand(time(NULL));
 }
 
 /**
@@ -207,12 +208,28 @@ int ge(const Number *_lhs, const Number *_rhs) {
 }
 
 /**
+ * ==
+ * @return 1 if equal 0 otherwise
+ */
+int eq(const Number *_lhs, const Number *_rhs){
+	if (_lhs->_length != _rhs->_length ){
+	  return 0;
+	}
+	for (int i = 0; i < _lhs->_length; ++i){
+	  if (_lhs->_ptr[i] != _rhs->_ptr[i]){
+		return 0;
+	  }
+	}
+	return 1;
+}
+
+/**
  * Division (integral) of two Numbers _lhs / _rhs
  * @Complexity: O(log^2(n))
  */
 void _mult(const Number *_lhs, const Number *_rhs, Number *_res) {
   Number _lhs_copied, _rhs_copied;
-  _copy(&_lhs_copied, _lhs), _copy(&_rhs_copied, _rhs), Init(_res);;
+  _copy(&_lhs_copied, _lhs), _copy(&_rhs_copied, _rhs), Init(_res);
   int mask;
   // scan the bits and add the shifted _rhs accordingly
   for (int i = 0; i < _lhs_copied._length; ++i) {
@@ -344,7 +361,10 @@ _bits_shift) {
   unsigned int length = _ptr->_length;
   for (int i = 0; i < _ptr->_length - _bytes_shift; ++i) {
 	temp = _ptr->_ptr[i + _bytes_shift];
+	printf("temp %d\n", temp);
+	printf("temp %d\n", temp >> _bits_shift);
 	_res->_ptr[i] = (temp >> _bits_shift);
+
 	if (i > 0) {
 	  _res->_ptr[i - 1] = _res->_ptr[i - 1] | ((temp & ((1 << _bits_shift) -
 		  1)) << (_BASE_UNIT - _bits_shift));
@@ -354,6 +374,8 @@ _bits_shift) {
 	}
   }
   _res->_length = length + 1;
+  _print_number(_res);
+
 }
 
 /**
@@ -363,7 +385,7 @@ _bits_shift) {
  * @param _exp power
  * @Complexity O(log(n))
  */
-void _compose(const Number *_ptr, Number *_u, Number *_exp) {
+void _compose(const Number *_ptr, Number *_u, Number *_exp, int *_pow) {
   int mask;
   int _res = 0;
   for (int i = 0; i < _ptr->_length; ++i) {
@@ -379,7 +401,12 @@ void _compose(const Number *_ptr, Number *_u, Number *_exp) {
   int _start = _res / _BASE_UNIT, _sub_start = _res % _BASE_UNIT;
   _exp->_ptr[_start] = 1 << (_sub_start);
   _exp->_length = _start + 1;
+  printf("exp and ptr\n");
+  _print_number(_exp);
+  _print_number(_ptr);
   _shift_right(_ptr, _u, _start, _sub_start);
+  printf("_start: %d sub_start: %d\n", _start, _sub_start);
+  *_pow = _start*_BASE_UNIT +_sub_start;
 }
 
 /**
@@ -419,3 +446,21 @@ void _inverse(const Number *_ptr, const Number *_base, Number *_res) {
 }
 
 
+/**
+ * generate a random number in the range 1,...,_upper_bound - 1
+ * @param _upper_bound range upper bound
+ * @param _res the result is stored in _res
+ */
+void _random(const Number *_upper_bound, Number *_res){
+  Init(_res);
+  for (int i = 0; i < _upper_bound->_length; ++i) {
+	_res->_ptr[i] = rand();
+	if (_res->_ptr[i] != 0) {
+	  _res->_length = i + 1;
+	}
+  }
+  _modulo(_res, _upper_bound, _res);
+  if (_res->_length  == 0){
+	_copy(_res, &_one);
+  }
+}

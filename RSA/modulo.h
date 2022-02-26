@@ -8,6 +8,10 @@
 #define RSA__MODULO_H_
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 #define _DEFAULT_SIZE  1024
 #define _CARRY_MASK 255
 #define _CARRY_MASK_LENGTH 8
@@ -22,6 +26,8 @@ typedef struct Number {
   uint8_t _ptr[_DEFAULT_SIZE];
   unsigned int _length;
 } Number;
+
+Number _one, _minus_one;
 
 /**
  * init number
@@ -96,6 +102,12 @@ int gt(const Number *_lhs, const Number *_rhs);
 int ge(const Number *_lhs, const Number *_rhs);
 
 /**
+ * ==
+ * @return 1 if equal 0 otherwise
+ */
+int eq(const Number *_lhs, const Number *_rhs);
+
+/**
  * Division (integral) of two Numbers _lhs / _rhs
  * @Complexity: O(log^2(n))
  */
@@ -152,7 +164,7 @@ _bits_shift);
  * @param _exp power
  * @Complexity O(log(n))
  */
-void _compose(const Number *_ptr, Number *_u, Number *_exp);
+void _compose(const Number *_ptr, Number *_u, Number *_exp, int *_pow);
 
 /**
  * Find s,t such that a*s+b*t=gcd(a,b), assume _a > _b
@@ -169,5 +181,13 @@ void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number
  * @Complexity O(log^3(n))
  */
 void _inverse(const Number *_ptr, const Number *_base, Number *_res);
+
+
+/**
+ * generate a random number in the range 1,...,_upper_bound - 1
+ * @param _upper_bound range upper bound
+ * @param _res the result is stored in _res
+ */
+void _random(const Number *_upper_bound, Number *_res);
 
 #endif //RSA__MODULO_H_
