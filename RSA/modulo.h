@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define _DEFAULT_SIZE  1024
+#define _DEFAULT_SIZE  128
 #define _CARRY_MASK 255
 #define _CARRY_MASK_LENGTH 8
 #define _BASE_UNIT 8

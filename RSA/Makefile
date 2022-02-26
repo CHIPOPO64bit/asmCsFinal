@@ -1,5 +1,5 @@
 CC=gcc
-CXXFLAGS= -Wall -Wvla  -Werror -Wextra -g -std=c99
+CXXFLAGS= -Wall -Wvla  -Wextra -g -std=c99
 
 
 %.o : %.c

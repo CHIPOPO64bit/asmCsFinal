@@ -22,7 +22,7 @@ void Init(Number *_ptr) {
 /**
  *  init global variables
  */
-void init_program(){
+void init_program() {
   Init(&_one);
   _one._ptr[0] = 1;
   _one._length = 1;
@@ -79,7 +79,7 @@ _byte_shift, int _bit_shift) {
   unsigned short carry = 0;
   unsigned short temp;
   int max_length = _min(_max(_lhs_copied._length, _rhs_copied._length +
-  _byte_shift),
+							_byte_shift),
 						_DEFAULT_SIZE);
   const uint8_t *ptr_l = _lhs_copied._ptr, *ptr_r = _rhs_copied._ptr;
   uint8_t *ptr_res = _res->_ptr;
@@ -211,16 +211,16 @@ int ge(const Number *_lhs, const Number *_rhs) {
  * ==
  * @return 1 if equal 0 otherwise
  */
-int eq(const Number *_lhs, const Number *_rhs){
-	if (_lhs->_length != _rhs->_length ){
+int eq(const Number *_lhs, const Number *_rhs) {
+  if (_lhs->_length != _rhs->_length) {
+	return 0;
+  }
+  for (int i = 0; i < _lhs->_length; ++i) {
+	if (_lhs->_ptr[i] != _rhs->_ptr[i]) {
 	  return 0;
 	}
-	for (int i = 0; i < _lhs->_length; ++i){
-	  if (_lhs->_ptr[i] != _rhs->_ptr[i]){
-		return 0;
-	  }
-	}
-	return 1;
+  }
+  return 1;
 }
 
 /**
@@ -361,8 +361,7 @@ _bits_shift) {
   unsigned int length = _ptr->_length;
   for (int i = 0; i < _ptr->_length - _bytes_shift; ++i) {
 	temp = _ptr->_ptr[i + _bytes_shift];
-	printf("temp %d\n", temp);
-	printf("temp %d\n", temp >> _bits_shift);
+
 	_res->_ptr[i] = (temp >> _bits_shift);
 
 	if (i > 0) {
@@ -374,7 +373,6 @@ _bits_shift) {
 	}
   }
   _res->_length = length + 1;
-  _print_number(_res);
 
 }
 
@@ -401,12 +399,10 @@ void _compose(const Number *_ptr, Number *_u, Number *_exp, int *_pow) {
   int _start = _res / _BASE_UNIT, _sub_start = _res % _BASE_UNIT;
   _exp->_ptr[_start] = 1 << (_sub_start);
   _exp->_length = _start + 1;
-  printf("exp and ptr\n");
-  _print_number(_exp);
-  _print_number(_ptr);
+
   _shift_right(_ptr, _u, _start, _sub_start);
-  printf("_start: %d sub_start: %d\n", _start, _sub_start);
-  *_pow = _start*_BASE_UNIT +_sub_start;
+
+  *_pow = _start * _BASE_UNIT + _sub_start;
 }
 
 /**
@@ -445,13 +441,12 @@ void _inverse(const Number *_ptr, const Number *_base, Number *_res) {
   _modulo(_res, _base, _res);
 }
 
-
 /**
  * generate a random number in the range 1,...,_upper_bound - 1
  * @param _upper_bound range upper bound
  * @param _res the result is stored in _res
  */
-void _random(const Number *_upper_bound, Number *_res){
+void _random(const Number *_upper_bound, Number *_res) {
   Init(_res);
   for (int i = 0; i < _upper_bound->_length; ++i) {
 	_res->_ptr[i] = rand();
@@ -460,7 +455,7 @@ void _random(const Number *_upper_bound, Number *_res){
 	}
   }
   _modulo(_res, _upper_bound, _res);
-  if (_res->_length  == 0){
+  if (_res->_length == 0) {
 	_copy(_res, &_one);
   }
 }
