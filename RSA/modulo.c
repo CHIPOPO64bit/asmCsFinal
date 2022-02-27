@@ -39,7 +39,7 @@ void init_program() {
  */
 void _print_number(const Number *_ptr) {
   for (int i = _ptr->_length - 1; i >= 0; --i) {
-	printf("%d ", _ptr->_ptr[i]);
+	printf("%d, ", _ptr->_ptr[i]);
   }
   printf("\n");
 }
@@ -86,7 +86,6 @@ _byte_shift, int _bit_shift) {
   const uint8_t *ptr_l = _lhs_copied._ptr, *ptr_r = _rhs_copied._ptr;
   uint8_t *ptr_res = _res->_ptr;
   _res->_length = max_length;
-
   // add each digit
   for (int i = 0; i < max_length;
 	   ++i) {
@@ -97,10 +96,8 @@ _byte_shift, int _bit_shift) {
 	  // compute the addition result
 	  temp = (unsigned short)((((unsigned short)ptr_l[i]) + (unsigned short)
 		  (ptr_r[i - _byte_shift] << _bit_shift) + (unsigned short)carry));
-
 	}
 	ptr_res[i] = (uint8_t)temp;
-
 	// the carry bits
 	carry = (temp & (~_CARRY_MASK)) >> (_CARRY_MASK_LENGTH);
   }
@@ -119,13 +116,18 @@ _byte_shift, int _bit_shift) {
  * @Complexity O(log(n))
  */
 void _neg(const Number *_ptr, Number *_res) {
-  _res->_length = _ptr->_length;
+  Number temp;
+  _copy(&temp, _ptr);
+  _res->_length = temp._length;
   // not
   for (unsigned int i = 0; i < _DEFAULT_SIZE; ++i) {
-	_res->_ptr[i] = ~(_ptr->_ptr[i]);
+	_res->_ptr[i] = ~(temp._ptr[i]);
+	if (_res->_ptr[i] != 0){
+	  _res->_length = i+1;
+	}
   }
   // add 1
-  _res->_length = _DEFAULT_SIZE;
+
   _add(&_one, _res, _res, 0, 0);
 }
 
@@ -255,6 +257,7 @@ void _mult(const Number *_lhs, const Number *_rhs, Number *_res) {
  */
 void _div_helper(const Number *_lhs, const Number *_rhs, Number *restrict _q_y,
 				 Number *_res) {
+
   if (gt(_rhs, _lhs)
 	  || (((_rhs->_ptr[_DEFAULT_SIZE - 1]) & (1 << (_BASE_UNIT - 1)))
 		  != 0)) {
@@ -265,14 +268,16 @@ void _div_helper(const Number *_lhs, const Number *_rhs, Number *restrict _q_y,
   _add(_rhs, _rhs, &temp, 0, 0);
   // compute _lhs / 2*_rhs
   _div_helper(_lhs, &temp, _q_y, _res);
-
   _add(_res, _res, _res, 0, 0);
-
   _add(_q_y, _rhs, &temp, 0, 0);
   if (ge(_lhs, &temp)) { // at least one more factor
 	_add(_q_y, _rhs, _q_y, 0, 0);
 	_add(_res, &_one, _res, 0, 0);
   }
+}
+
+int is_negative(const Number *_ptr) {
+  return _ptr->_ptr[_DEFAULT_SIZE - 1] & (1 << (_CARRY_MASK_LENGTH - 1));
 }
 
 /**
@@ -285,9 +290,21 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res) {
    * to rhs. if negative, return 0, otherwise return the distance. assume
    * both x and y positive integers
    */
-  Number _q_y;
+  Number _q_y, _lhs_copied, _rhs_copied;
   Init(&_q_y), Init(_res);
-  _div_helper(_lhs, _rhs, &_q_y, _res);
+  if (is_negative(_lhs)) {
+	//printf("here again!! div lhs\n");
+	_neg(_lhs, &_lhs_copied);
+  } else {
+	_copy(&_lhs_copied, _lhs);
+  }
+  if (is_negative(_rhs)) {
+	//printf("here again!! div rhs\n");
+	_neg(_rhs, &_rhs_copied);
+  } else {
+	_copy(&_rhs_copied, _rhs);
+  }
+  _div_helper(&_lhs_copied, &_rhs_copied, &_q_y, _res);
 }
 
 /**
@@ -296,11 +313,28 @@ void _div(const Number *_lhs, const Number *_rhs, Number *_res) {
  */
 void _modulo(const Number *_lhs, const Number *_rhs, Number *_res) {
   Number _q, _ml, _lhs_copied, _rhs_copied;
-  _copy(&_lhs_copied, _lhs), _copy(&_rhs_copied, _rhs), Init(_res);
+  Init(&_lhs_copied), Init(&_rhs_copied);
+  int _lhs_negative = 0;
+  if (is_negative(_lhs)) {
+	//printf("here again!!!!!!!!!!!!\n");
+	_neg(_lhs, &_lhs_copied);
+	_lhs_negative = 1;
+  } else {
+	_copy(&_lhs_copied, _lhs);
+  }
+  if (is_negative(_rhs)) {
+	fprintf(stderr, "Can't compute modulo with a negative base\n");
+	exit(EXIT_FAILURE);
+  } else {
+	_copy(&_rhs_copied, _rhs);
+  }
+  Init(_res);
   _div(&_lhs_copied, &_rhs_copied, &_q);
   _mult(&_q, &_rhs_copied, &_ml);
   _sub(&_lhs_copied, &_ml, _res, 0, 0);
-
+  if (_lhs_negative && _res->_length != 0){
+	_sub(_rhs, _res, _res, 0, 0);
+  }
 }
 
 /**
@@ -339,18 +373,31 @@ void _modular_exp(const Number
 	mask = 1 << bits;
 	for (int j = bits; j >= 0; --j) {
 	  // compute _res**2
+
+
+//	  printf("before mult res length: %d last byte: %d\n", _res->_length,
+//			 _res->_ptr[_DEFAULT_SIZE-1]);
 	  _mult(_res, _res, _res);
+//	  if (is_negative(_res)){
+//		printf("res length: %d last byte: %d\n", _res->_length,
+//			   _res->_ptr[_DEFAULT_SIZE-1]);
+//	  }
 	  _modulo(_res, _base, _res);
+
 	  // mult by _rhs if needed
 	  if ((_exp->_ptr[i] & mask) != 0) {
 		_mult(_exp_base, _res, _res);
+//		if (is_negative(_res)){
+//		  printf("res length: %d last byte: %d\n", _res->_length,
+//				 _res->_ptr[_DEFAULT_SIZE-1]);
+//		}
 		_modulo(_res, _base, _res);
+
 	  }
 	  mask = mask >> 1;
 	}
   }
 }
-
 
 /**
  * shift right
@@ -388,15 +435,18 @@ _bits_shift) {
  */
 void _compose(const Number *_ptr, Number *_u, Number *_exp, int *_pow) {
   int mask;
-  int _res = 0;
-  for (int i = 0; i < _ptr->_length; ++i) {
+  int _res = 0, not_found = 1;
+  for (int i = 0; (i < _ptr->_length) && not_found; ++i) {
 	mask = 1;
+
 	for (int j = 0; j < _BASE_UNIT; ++j) {
 	  if ((_ptr->_ptr[i] & mask) != 0) {
+		not_found = 0;
 		break;
 	  }
+
 	  ++_res;
-	  mask <<= 1;
+	  mask = mask + mask;
 	}
   }
   int _start = _res / _BASE_UNIT, _sub_start = _res % _BASE_UNIT;
