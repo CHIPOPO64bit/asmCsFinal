@@ -6,6 +6,13 @@
 #define RSA__RSA_H_
 #include "modulo.h"
 
+Number e;
+
+/**
+ *  init global variables
+ */
+void init_program();
+
 /**
  *
  * @param _ptr

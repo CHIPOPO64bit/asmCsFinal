@@ -3,6 +3,24 @@
 //
 #include "rsa.h"
 #define _PRIME_SIZE 64
+const uint8_t co_prime_e[] = {1, 0, 1};
+
+/**
+ *  init global variables
+ */
+void init_program() {
+  Init(&_one);
+  _one._ptr[0] = 1;
+  _one._length = 1;
+  _neg(&_one, &_minus_one);
+  srand(time(NULL));
+  for (int i = 0; i < 3; ++i){
+	e._ptr[i] = co_prime_e[i];
+  }
+  e._length = 3;
+
+}
+
 /**
  *
  * @param _ptr
@@ -124,4 +142,7 @@ void _generate_keys(int length, Number *_N, Number *_e, Number *_d){
   Number p, q;
   _generate_prime(&p, _PRIME_SIZE / _BASE_UNIT);
   _generate_prime(&q, _PRIME_SIZE / _BASE_UNIT);
+  _mult(&p, &q, _N);
+
+
 }

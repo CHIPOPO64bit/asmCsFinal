@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define _DEFAULT_SIZE  70
+#define _DEFAULT_SIZE  50
 #define _CARRY_MASK 255
 #define _CARRY_MASK_LENGTH 8
 #define _BASE_UNIT 8
@@ -36,10 +36,6 @@ Number _one, _minus_one;
  */
 void Init(Number *_ptr);
 
-/**
- *  init global variables
- */
-void init_program();
 
 /**
  * prints _ptr

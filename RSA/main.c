@@ -21,11 +21,11 @@ int main() {
 	t._ptr[i] = 0;
 	base._ptr[i] = 0;
   }
-
-
   init_program();
-  _generate_prime(&c, 32);
-  _print_number(&c);
+  _generate_prime(&c, 16);
+  _generate_prime(&b, 16);
+//  _print_number(&c);
+	printf("%d\n", e._length);
 
   return 0;
 }

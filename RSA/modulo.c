@@ -21,16 +21,7 @@ void Init(Number *_ptr) {
   _ptr->_length = 0;
 }
 
-/**
- *  init global variables
- */
-void init_program() {
-  Init(&_one);
-  _one._ptr[0] = 1;
-  _one._length = 1;
-  _neg(&_one, &_minus_one);
-  srand(time(NULL));
-}
+
 
 /**
  * prints _ptr
