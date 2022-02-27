@@ -3,6 +3,8 @@
 //
 #include "rsa.h"
 #define _PRIME_SIZE 64
+#define _CO_PRIME_SIZE 3
+
 const uint8_t co_prime_e[] = {1, 0, 1};
 
 /**
@@ -14,11 +16,10 @@ void init_program() {
   _one._length = 1;
   _neg(&_one, &_minus_one);
   srand(time(NULL));
-  for (int i = 0; i < 3; ++i){
+  for (int i = 0; i < _CO_PRIME_SIZE; ++i){
 	e._ptr[i] = co_prime_e[i];
   }
-  e._length = 3;
-
+  e._length = _CO_PRIME_SIZE;
 }
 
 /**
@@ -120,11 +121,18 @@ void _generate_random(Number *_res, int size){
 void _generate_prime(Number *_res, int size){
 
   int i = 1;
+  Number prime_dec, temp;
+
   while (1){
 	_generate_random(_res, size);
 	_print_number(_res);
 	if (_miller_rabin(_res, 10)){
-	  return;
+	  Init(&temp);
+	  _sub(_res, &_one, &prime_dec, 0, 0);
+	  _modulo(&prime_dec, &e, &temp);
+	  if (temp._length != 0){
+		return;
+	  }
 	}
 	++i;
 	printf("again %d\n", i);
@@ -139,10 +147,21 @@ void _generate_prime(Number *_res, int size){
  * @param _d
  */
 void _generate_keys(int length, Number *_N, Number *_e, Number *_d){
-  Number p, q;
-  _generate_prime(&p, _PRIME_SIZE / _BASE_UNIT);
-  _generate_prime(&q, _PRIME_SIZE / _BASE_UNIT);
+  Number p, q, res, p_dec, q_dec, phi_N;
+  Init(&p), Init(&q), Init(&res);
+  // generate p,q,N
+  _generate_prime(&p, length);
+  _generate_prime(&q, length);
   _mult(&p, &q, _N);
-
-
+  _sub(&p, &_one, &p_dec, 0, 0);
+  _sub(&q, &_one, &q_dec, 0, 0);
+  _mult(&p_dec, &q_dec, &phi_N);
+  // generate e,d
+  _copy(_e, &e);
+  _inverse(_e, &phi_N, _d);
+  _mult(_e, _d, &res);
+  _modulo(&res, &phi_N, &res);
+  printf("ed mode phi N\n");
+  _print_number(&res);
+  printf("\n");
 }

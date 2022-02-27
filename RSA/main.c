@@ -9,7 +9,8 @@ int main() {
   Number c, s, t;
   Number base;
   b._length = 0;
-  base._length = 1;
+  a._length  = 0;
+  base._length = 0;
   c._length = 0;
   s._length = 0, t._length = 0;
 
@@ -22,10 +23,18 @@ int main() {
 	base._ptr[i] = 0;
   }
   init_program();
-  _generate_prime(&c, 16);
-  _generate_prime(&b, 16);
-//  _print_number(&c);
-	printf("%d\n", e._length);
+  _generate_keys(32, &a, &b, &c);
 
+  s._ptr[0] = 255;
+  s._ptr[1] = 255;
+  s._length = 2;
+  _mult(&b, &c, &t);
+  _modular_exp(&s, &t, &a, &base);
+
+  printf("\n");
+  _print_number(&a);
+  _print_number(&b);
+  _print_number(&c);
+  _print_number(&base);
   return 0;
 }
