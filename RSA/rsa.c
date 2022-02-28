@@ -6,7 +6,9 @@
 #define _CO_PRIME_SIZE 3
 
 const uint8_t co_prime_e[] = {1, 0, 1};
-
+const uint8_t _d[] = {17, 133, 247, 41, 190, 193, 198, 75, 48, 156, 17, 144,
+					177, 157,
+			   166, 114, 37, 201, 140, 72, 179, 177, 54, 108, 194, 13, 45, 121, 217, 148, 167, 97};
 /**
  *  init global variables
  */
@@ -20,6 +22,10 @@ void init_program() {
 	e._ptr[i] = co_prime_e[i];
   }
   e._length = _CO_PRIME_SIZE;
+  for (int i = 0; i < 32; ++i){
+	d._ptr[i] = _d[31-i];
+  }
+  d._length = 32;
 }
 
 /**

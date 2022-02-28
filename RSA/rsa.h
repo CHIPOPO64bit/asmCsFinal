@@ -6,7 +6,7 @@
 #define RSA__RSA_H_
 #include "modulo.h"
 
-Number e;
+Number e, d;
 
 /**
  *  init global variables

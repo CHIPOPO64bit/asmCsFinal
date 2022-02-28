@@ -22,6 +22,8 @@ primes is not an easy task and might take a couple of minuets.\n"
 #define _MAX_PATH_SIZE 100
 #define _MAX_LINE_LENGTH 200
 
+// Huge problem. Code doesn't work!!!!
+
 void get_path(char *path){
   char cur, i = 0;
   path[(int)i] = '\0';
@@ -156,6 +158,7 @@ void _encrypt(FILE *data, FILE *encrypted, const Number *N, const Number *e){
   while ((length = fread(line, sizeof(char), _MAX_SEGMENT, data))){
 	i = 0;
 	line[length] = '\0';
+	printf("%s\n", line);
 	Init(&temp);
 	while (i < length){
 	  temp._ptr[i] = line[i];
@@ -171,6 +174,10 @@ void _encrypt(FILE *data, FILE *encrypted, const Number *N, const Number *e){
 
 	_print_number(&res);
 	_write_data(encrypted, &res);
+	Init(&temp);
+	_modular_exp(&res, &d, N, &temp);
+	printf("m^ed mod n = 1?\n");
+	_print_number(&temp);
   }
 }
 void _handle_encrypt(){
@@ -288,9 +295,9 @@ int main() {
   ctrl = fgetc(stdin);
   fgetc(stdin);
   _handle_request(ctrl);
-//init_program();
-//Number _N, en, res, _d;
-//Init(&res), Init(&_N), Init(&en), Init(&_d);
+init_program();
+Number _N, en, res, _d;
+Init(&res), Init(&_N), Init(&en), Init(&_d);
 //
 //uint8_t enc[] ={28, 116, 161, 87, 211, 32, 128, 106, 163, 229, 235, 42, 147,
 //			   192,
@@ -298,14 +305,14 @@ int main() {
 //		  199, 242, 60};
 //uint8_t N[] = {34, 128, 45, 166, 83, 112, 183, 19, 156, 74, 205, 14, 23, 58,
 //			128, 233, 166, 205, 186, 125, 52, 103, 50, 133, 241, 207, 207, 228, 3, 236, 170, 21};
-//uint8_t d[] = {17, 133, 247, 41, 190, 193, 198, 75, 48, 156, 17, 144, 177, 157,
-//			166, 114, 37, 201, 140, 72, 179, 177, 54, 108, 194, 13, 45, 121, 217, 148, 167, 97};
-//
-//for (int i = 0; i < 32; ++i){
+uint8_t d[] = {17, 133, 247, 41, 190, 193, 198, 75, 48, 156, 17, 144, 177, 157,
+			166, 114, 37, 201, 140, 72, 179, 177, 54, 108, 194, 13, 45, 121, 217, 148, 167, 97};
+
+for (int i = 0; i < 32; ++i){
 //  en._ptr[i] = enc[31-i];
 //  _N._ptr[i] = N[31-i];
-//  _d._ptr[i] = d[31-i];
-//}
+  _d._ptr[i] = d[31-i];
+}
 //  en._length = 32;
 //  _N._length = 32;
 //  _d._length = 32;
