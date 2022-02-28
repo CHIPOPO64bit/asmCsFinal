@@ -351,6 +351,11 @@ int _find_msb(uint8_t a) {
 void _modular_exp(const Number
 				  *_exp_base, const Number *_exp, const Number *_base, Number
 				  *_res) {
+//  _print_number(_exp_base);
+//  _print_number(_exp);
+//  _print_number(_base);
+
+
   _res->_ptr[0] = 1;
   _res->_length = 1;
   int msb, mask, bits;
@@ -366,14 +371,18 @@ void _modular_exp(const Number
 	  // compute _res**2
 
 
-//	  printf("before mult res length: %d last byte: %d\n", _res->_length,
-//			 _res->_ptr[_DEFAULT_SIZE-1]);
 	  _mult(_res, _res, _res);
+
+
+
 //	  if (is_negative(_res)){
 //		printf("res length: %d last byte: %d\n", _res->_length,
 //			   _res->_ptr[_DEFAULT_SIZE-1]);
 //	  }
+
+
 	  _modulo(_res, _base, _res);
+
 
 	  // mult by _rhs if needed
 	  if ((_exp->_ptr[i] & mask) != 0) {
