@@ -119,18 +119,18 @@ void _generate_random(Number *_res, int size){
  * @param size
  */
 void _generate_prime(Number *_res, int size){
-
   int i = 1;
   Number prime_dec, temp;
-
   while (1){
 	_generate_random(_res, size);
 	_print_number(_res);
-	if (_miller_rabin(_res, 10)){
+	if (_miller_rabin(_res, 7)){
 	  Init(&temp);
 	  _sub(_res, &_one, &prime_dec, 0, 0);
 	  _modulo(&prime_dec, &e, &temp);
+	  printf("found prime\n");
 	  if (temp._length != 0){
+
 		return;
 	  }
 	}
@@ -149,7 +149,7 @@ void _generate_prime(Number *_res, int size){
 void _generate_keys(int length, Number *_N, Number *_e, Number *_d){
   Number p, q, res, p_dec, q_dec, phi_N;
   Init(&p), Init(&q), Init(&res);
-  // generate p,q,N
+  // generate p, q, N
   _generate_prime(&p, length);
   _generate_prime(&q, length);
   _mult(&p, &q, _N);
@@ -159,9 +159,4 @@ void _generate_keys(int length, Number *_N, Number *_e, Number *_d){
   // generate e,d
   _copy(_e, &e);
   _inverse(_e, &phi_N, _d);
-  _mult(_e, _d, &res);
-  _modulo(&res, &phi_N, &res);
-  printf("ed mode phi N\n");
-  _print_number(&res);
-  printf("\n");
 }

@@ -1,0 +1,6 @@
+The two streams below are N and e. from left to right you can find the digits in hex
+
+15 aa ec 3 e4 cf cf f1 85 32 67 34 7d ba cd a6 e9 80 3a 17 e cd 4a 9c 13 b7 70 53 a6 2d 80 22 
+
+1 0 1 
+

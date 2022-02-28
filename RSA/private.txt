@@ -1,0 +1,4 @@
+The stream below is d. from left to right you can find the digits in hex
+
+61 a7 94 d9 79 2d d c2 6c 36 b1 b3 48 8c c9 25 72 a6 9d b1 90 11 9c 30 4b c6 c1 be 29 f7 85 11 
+

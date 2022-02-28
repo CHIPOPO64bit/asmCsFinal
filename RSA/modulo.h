@@ -24,7 +24,7 @@
 
 typedef struct Number {
   uint8_t _ptr[_DEFAULT_SIZE];
-  unsigned int _length;
+  int _length;
 } Number;
 
 Number _one, _minus_one;
