@@ -344,6 +344,6 @@ int main() {
 	ctrl = fgetc(stdin);
 	fgetc(stdin);
 	_handle_request(ctrl);
-  } while (ctrl != 'q');
+  } while (ctrl != _QUIT_CHAR);
   return 0;
 }
