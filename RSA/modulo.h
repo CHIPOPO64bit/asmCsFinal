@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define _DEFAULT_SIZE  130
+#define _DEFAULT_SIZE  70
 #define _MAX_STRING 31
 #define _MAX_SEGMENT 32
 #define _CARRY_MASK 255
