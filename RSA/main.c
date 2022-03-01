@@ -21,7 +21,7 @@ primes is not an easy task and might take a couple of minuets.\n"
 #define _BRIEF_DESC 'b'
 #define _MAX_PATH_SIZE 100
 #define _MAX_LINE_LENGTH 200
-
+// found error: string is much bigger than N, need to fix, maybe by a bias
 // Huge problem. Code doesn't work!!!!
 
 void get_path(char *path){
@@ -38,7 +38,7 @@ void get_path(char *path){
 
 void _write_key(FILE *file,  const Number *key){
   for (int i = 0; i<key->_length; ++i){
-	fprintf(file, "%x ", (unsigned char) key->_ptr[i]);
+	fprintf(file, "%02x ", (unsigned char) key->_ptr[i]);
   }
   fprintf(file, "\n\n");
 }
@@ -57,6 +57,7 @@ void _write_private_key(FILE *file, const Number *d){
 
 void _handle_generate_keys(){
   char path_public[_MAX_PATH_SIZE], path_private[_MAX_PATH_SIZE];
+  Number temp, res;
   // get path for
   printf("Enter the path for the public key: ");
   get_path(path_public);
@@ -80,6 +81,30 @@ void _handle_generate_keys(){
   Number e,d,N;
   Init(&e), Init(&d), Init(&N);
   _generate_keys(16, &N, &e, &d);
+  printf("Keys: N d e\n");
+  _print_number(&N);
+  printf("\n");
+  _print_number(&d);
+  printf("\n");
+  _print_number(&e);
+  printf("\n");
+  Init(&temp), Init(&res);
+  for (int i = 0; i < N._length - 1; ++i){
+	temp._ptr[i] = rand();
+  }
+  temp._ptr[N._length-1] = 1;
+  temp._length= N._length;
+  printf("TEst: random, **ed\n");
+  _print_number(&temp);
+  printf("\n");
+  _modular_exp(&temp, &e, &N, &res);
+  _copy(&temp, &res);
+  Init(&res);
+  _modular_exp(&temp, &d, &N, &res);
+
+  _print_number(&res);
+  printf("\n");
+
   _write_public_key(public, &N, &e);
   _write_private_key(private, &d);
   fclose(public);
@@ -94,18 +119,22 @@ char convert_to_value(char value){
 }
 
 void _read_key(const char*line, Number *key){
+  //printf("new key\n");
   int i = 0, j = 0;
-  char ah , al, cur;
+  unsigned char ah , al, cur;
   while (line[i] && line[i] != '\n' && i < _MAX_LINE_LENGTH){
 	ah = line[i++];
 	al = line[i++];
+	//printf("%c%c ", ah, al);
 	++i;
 	ah = convert_to_value(ah);
 	al = convert_to_value(al);
 	cur = (ah << 4) | al;
+
 	key->_ptr[j] = cur;
 	key->_length = ++j;
   }
+  printf("\n");
 }
 
 void _read_encryption_file(FILE *key_file, Number *N, Number *e){
@@ -140,7 +169,7 @@ int _open_file(FILE **file, const char *msg, const char *mode){
 }
 void _write_data(FILE *file, const Number *data){
   for (int i = 0; i < data->_length; ++i){
-	printf("%02x\n", data->_ptr[i]);
+	//printf("%02x\n", data->_ptr[i]);
 	fprintf(file, "%02x", data->_ptr[i]);
   }
 }
@@ -153,12 +182,12 @@ void _write_decrypted(FILE *file, const Number *data){
 void _encrypt(FILE *data, FILE *encrypted, const Number *N, const Number *e){
   Number temp, res;
   Init(&res);
-  char line[_MAX_SEGMENT+1];
+  char line[_MAX_STRING+1];
   int i, length;
-  while ((length = fread(line, sizeof(char), _MAX_SEGMENT, data))){
+  while ((length = fread(line, sizeof(char), _MAX_STRING, data))){
 	i = 0;
 	line[length] = '\0';
-	printf("%s\n", line);
+	//printf("%s\n", line);
 	Init(&temp);
 	while (i < length){
 	  temp._ptr[i] = line[i];
@@ -169,15 +198,12 @@ void _encrypt(FILE *data, FILE *encrypted, const Number *N, const Number *e){
 	for (int i = res._length; i < _MAX_SEGMENT; ++i){
 	  res._ptr[i] = 0;
 	}
-	printf("%d %d\n", res._length, res._ptr[_MAX_SEGMENT-1]);
-	res._length =_MAX_SEGMENT;
-
+	printf("current block\n");
 	_print_number(&res);
+	res._length =_MAX_SEGMENT;
 	_write_data(encrypted, &res);
-	Init(&temp);
-	_modular_exp(&res, &d, N, &temp);
-	printf("m^ed mod n = 1?\n");
-	_print_number(&temp);
+
+
   }
 }
 void _handle_encrypt(){
@@ -200,7 +226,8 @@ void _handle_encrypt(){
 	fclose(data_file);
   }
   _read_encryption_file(key_file, &N, &e);
-  _print_number(&N);
+//  _print_number(&N);
+//  _print_number(&e);
 
   _encrypt(data_file, encrypted_file, &N, &e);
   fclose(key_file);
@@ -218,22 +245,26 @@ void _decrypt(FILE *encrypted, FILE *decrypted, const Number *N, const Number
 							   encrypted))){
 	i = 0, j =0;
 	line[length] = '\0';
-	printf("%s\n", line);
+	printf("current encrypted:\n%s\n", line);
 	Init(&temp);
 	while (i < length){
 	  ah = convert_to_value(line[i++]);
 	  al = convert_to_value(line[i++]);
-	  printf("%d %d\n", ah, al);
+	  //printf("%d %d\n", ah, al);
 	  temp._ptr[j] = al | ah << 4;
 	  //printf("%d\n", temp._ptr[j]);
 	  if (temp._ptr[j] != 0){
-		temp._length = ++j;
+		temp._length = j+1;
 	  }
+	  ++j;
 	}
-	Init(&res);
 	_print_number(&temp);
+	Init(&res);
+	//printf("current block\n");
+//	_print_number(&temp);
 	_modular_exp(&temp, d, N, &res);
-	_print_number(&res);
+//	_print_number(&res);
+	//_print_number(&res);
 	_write_decrypted(decrypted, &res);
   }
 }
@@ -259,7 +290,8 @@ void _handle_decrypt(){
 	exit(EXIT_FAILURE);
   }
   _read_encryption_file(key_file, &N, &d);
-  _print_number(&d);
+//  _print_number(&N);
+//  _print_number(&d);
   _decrypt(encrypted_file, decrypted_file, &N, &d);
   fclose(key_file);
   fclose(decrypted_file);
@@ -295,34 +327,34 @@ int main() {
   ctrl = fgetc(stdin);
   fgetc(stdin);
   _handle_request(ctrl);
-init_program();
-Number _N, en, res, _d;
-Init(&res), Init(&_N), Init(&en), Init(&_d);
+//init_program();
+//Number _N, en, res, _d;
+//Init(&res), Init(&_N), Init(&en), Init(&_d);
+////
+////uint8_t enc[] ={28, 116, 161, 87, 211, 32, 128, 106, 163, 229, 235, 42, 147,
+////			   192,
+////		  36, 36, 59, 5, 221, 214, 2, 16, 238, 109, 51, 117, 205, 251, 121,
+////		  199, 242, 60};
+////uint8_t N[] = {34, 128, 45, 166, 83, 112, 183, 19, 156, 74, 205, 14, 23, 58,
+////			128, 233, 166, 205, 186, 125, 52, 103, 50, 133, 241, 207, 207, 228, 3, 236, 170, 21};
+//uint8_t d[] = {17, 133, 247, 41, 190, 193, 198, 75, 48, 156, 17, 144, 177, 157,
+//			166, 114, 37, 201, 140, 72, 179, 177, 54, 108, 194, 13, 45, 121, 217, 148, 167, 97};
 //
-//uint8_t enc[] ={28, 116, 161, 87, 211, 32, 128, 106, 163, 229, 235, 42, 147,
-//			   192,
-//		  36, 36, 59, 5, 221, 214, 2, 16, 238, 109, 51, 117, 205, 251, 121,
-//		  199, 242, 60};
-//uint8_t N[] = {34, 128, 45, 166, 83, 112, 183, 19, 156, 74, 205, 14, 23, 58,
-//			128, 233, 166, 205, 186, 125, 52, 103, 50, 133, 241, 207, 207, 228, 3, 236, 170, 21};
-uint8_t d[] = {17, 133, 247, 41, 190, 193, 198, 75, 48, 156, 17, 144, 177, 157,
-			166, 114, 37, 201, 140, 72, 179, 177, 54, 108, 194, 13, 45, 121, 217, 148, 167, 97};
-
-for (int i = 0; i < 32; ++i){
-//  en._ptr[i] = enc[31-i];
-//  _N._ptr[i] = N[31-i];
-  _d._ptr[i] = d[31-i];
-}
-//  en._length = 32;
-//  _N._length = 32;
-//  _d._length = 32;
-//  _modular_exp(&en, &_d, &_N, &res);
-//  _print_number(&res);
-//  _write_decrypted(stdout, &res);
-//FILE *private = fopen("private.txt", "r");
-//Number N, e;
-//Init(&N), Init(&e);
-//  _read_decryption_file(private, &e);
-//  fclose(private);
+//for (int i = 0; i < 32; ++i){
+////  en._ptr[i] = enc[31-i];
+////  _N._ptr[i] = N[31-i];
+//  _d._ptr[i] = d[31-i];
+//}
+////  en._length = 32;
+////  _N._length = 32;
+////  _d._length = 32;
+////  _modular_exp(&en, &_d, &_N, &res);
+////  _print_number(&res);
+////  _write_decrypted(stdout, &res);
+////FILE *private = fopen("private.txt", "r");
+////Number N, e;
+////Init(&N), Init(&e);
+////  _read_decryption_file(private, &e);
+////  fclose(private);
   return 0;
 }
