@@ -13,12 +13,13 @@
 #include <time.h>
 
 #define _DEFAULT_SIZE  70
-#define _MAX_STRING 31
+#define _MAX_STRING         31
 #define _MAX_SEGMENT 32
 #define _CARRY_MASK 255
 #define _CARRY_MASK_LENGTH 8
 #define _BASE_UNIT 8
-
+#define _AF "asfasf \
+asasgasg"
 /**
  * Represents a big number, since we want to control the bits, each cell is
  * only one byte.

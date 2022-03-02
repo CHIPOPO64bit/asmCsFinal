@@ -1,0 +1,1 @@
+/usr/local/bin/x86_64-apple-darwin20-gcc-11 -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.6 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/RSA.dir/main.c.o CMakeFiles/RSA.dir/modulo.c.o CMakeFiles/RSA.dir/rsa.c.o -o RSA 
