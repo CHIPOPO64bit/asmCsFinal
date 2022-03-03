@@ -1,5 +1,5 @@
 # asmCsFinal
-Hi all, this is the ecnryption decryption editor the code files are the following:
+##Hi all, this is the ecnryption decryption editor the code files are the following:
 rsa.h
 rsa.c
 
@@ -14,6 +14,11 @@ make main
 
 then you can run the editor by running ./main
 note. you have to run it on a unix environment
+
+##convert headers to tasm files
+
+you can run convert_header.py in order to convert a header file into tasm api.
+I will publish more on this soon.
  
 
 
