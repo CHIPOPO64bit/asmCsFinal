@@ -13,13 +13,7 @@ _BASE_UNIT equ 8d
 
 CODESEG
 
-COMMENT @
-/**
- * init number
- * @param _ptr number pointer
- * @Complexity O(log(n))
- */
- @
+
 proc Init 
 endp Init
 
