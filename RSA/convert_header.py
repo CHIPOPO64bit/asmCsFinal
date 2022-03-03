@@ -7,6 +7,7 @@ C_MSG = """
 
 """
 OPEN_ASM_FILE = """
+.286
 IDEAL
 MODEL small
 STACK 100h
@@ -60,11 +61,13 @@ class Parser():
         m = p.findall(self.__data)
         self.__result += "; macros\n"
         for define in m:
-            #print(define)
+
             name = define[1]
             value = define[2]
             if value[0] == "\"":
-                self.__result += name + " db " + value.replace("\n", "\\n") \
+
+                self.__result += name + " db " + value.replace("\\\n",
+                                                               "\\n")\
                                  +",'$'\n"
             else:
                 self.__result += name + " equ " + value + "d\n"
@@ -79,17 +82,19 @@ class Parser():
         p = regex.compile(pattern)
         m = p.findall(self.__data)
 
+        self.__result += "CODESEG\n\n"
         for func in m:
             docs = func[1]
             decl = func[3]
             name = func[5]
             self.__result += "; Docs"
-            self.__result += docs.replace("/**", "").replace("*/",
+            self.__result += docs.replace("/**", "").replace(" */",
                                                              "").replace(
-                " *", ";")+"\n"
+                " *", "; *")
             self.__result += "; " + decl.replace("\n", "").replace("\t",
                                                                       "")+"\n"
-            self.__result += "proc "+name+"\n"+"\tpusha\n\tpopa\n"+"endp "+name
+            self.__result += "proc " \
+                             ""+name+"\n"+"\tpusha\n\tpopa\n\tret\n"+"endp "+name
             self.__result += "\n\n"
 
     def __parse_function_declarations(self):
