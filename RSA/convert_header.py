@@ -105,29 +105,7 @@ class Parser():
 
 
 def main():
-
-#     g = "((void|int|char|long) +[\w]+\(([^\(\)]*\n?)*\);)"
-#     r = "((void|int|char|long) +[\w]+\(.*\))"
-#     str = """
-# /**
-#  * init number
-#  * @param _ptr number pointer
-#  * @Complexity O(log(n))
-#  */
-# void Init(Number *\n\n\n_ptr);
-#
-#
-# /**
-#  * prints _ptr
-#  * @param _ptr number pointer
-#  * @Complexity O(log(n))
-#  */
-# void _print_number(const Number *_ptr);
-#     """
-#     t = regex.compile(g)
-#     z = t.findall(str)
-#     print(z)
-    p = Parser("main.c")
+    p = Parser("modulo.h")
     p.write()
 
 

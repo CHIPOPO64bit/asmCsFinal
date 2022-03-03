@@ -5,6 +5,7 @@
 
 
 
+.286
 IDEAL
 MODEL small
 STACK 100h
@@ -12,226 +13,251 @@ STACK 100h
 DATASEG
 
 ; headers
-; #include "modulo.h"
+; #include <stdint.h>
+; #include <stdio.h>
+; #include <stdlib.h>
+; #include <time.h>
 
 ; macros
+_DEFAULT_SIZE equ 70d
+_MAX_STRING equ 31d
+_MAX_SEGMENT equ 32d
+_CARRY_MASK equ 255d
+_CARRY_MASK_LENGTH equ 8d
+_BASE_UNIT equ 8d
+_AF db "asfasf \nasasgasg",'$'
+
+CODESEG
 
 ; Docs
-; init number
-; @param _ptr number pointer
-; @Complexity O(log(n))
- 
+; * init number
+; * @param _ptr number pointer
+; * @Complexity O(log(n))
 ; void Init(Number *_ptr)
 proc Init
 	pusha
 	popa
+	ret
 endp Init
 
 ; Docs
-; prints _ptr
-; @param _ptr number pointer
-; @Complexity O(log(n))
- 
+; * prints _ptr
+; * @param _ptr number pointer
+; * @Complexity O(log(n))
 ; void _print_number(const Number *_ptr)
 proc _print_number
 	pusha
 	popa
+	ret
 endp _print_number
 
 ; Docs
-; @return max(a,b)
- 
+; * @return max(a,b)
 ; int _max(int a, int b)
 proc _max
 	pusha
 	popa
+	ret
 endp _max
 
 ; Docs
-; @return min(a,b)
- 
+; * @return min(a,b)
 ; int _min(int a, int b)
 proc _min
 	pusha
 	popa
+	ret
 endp _min
 
 ; Docs
-; addition of two Numbers
-; @param _byte_shift shift rhs <> bytes
-; @param _bit_shift shift rhs <> bits
-; @Complexity: O(log(n))
- 
+; * addition of two Numbers
+; * @param _byte_shift shift rhs <> bytes
+; * @param _bit_shift shift rhs <> bits
+; * @Complexity: O(log(n))
 ; void _add(const Number *_lhs, const Number *_rhs, Number *_res, int_byte_shift, int _bit_shift)
 proc _add
 	pusha
 	popa
+	ret
 endp _add
 
 ; Docs
-; computes -number
-; @param _ptr number
-; @param _res stores the result in _res
-; @Complexity O(log(n))
- 
+; * computes -number
+; * @param _ptr number
+; * @param _res stores the result in _res
+; * @Complexity O(log(n))
 ; void _neg(const Number *_ptr, Number *_res)
 proc _neg
 	pusha
 	popa
+	ret
 endp _neg
 
 ; Docs
-; subtraction _lhs - _rhs
-; @param _res stores the result in _res
-; @Complexity O(log(n))
- 
+; * subtraction _lhs - _rhs
+; * @param _res stores the result in _res
+; * @Complexity O(log(n))
 ; void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,  int bits)
 proc _sub
 	pusha
 	popa
+	ret
 endp _sub
 
 ; Docs
-; copy _rhs into _lhs by value
-; @Complexity O(log(n))
- 
+; * copy _rhs into _lhs by value
+; * @Complexity O(log(n))
 ; void _copy(Number *_lhs, const Number *_rhs)
 proc _copy
 	pusha
 	popa
+	ret
 endp _copy
 
 ; Docs
-; @return _lhs > _rhs
-; @Complexity O(log(n))
- 
+; * @return _lhs > _rhs
+; * @Complexity O(log(n))
 ; int gt(const Number *_lhs, const Number *_rhs)
 proc gt
 	pusha
 	popa
+	ret
 endp gt
 
 ; Docs
-; @return _lhs >= _rhs
-; @Complexity O(log(n))
- 
+; * @return _lhs >= _rhs
+; * @Complexity O(log(n))
 ; int ge(const Number *_lhs, const Number *_rhs)
 proc ge
 	pusha
 	popa
+	ret
 endp ge
 
 ; Docs
-; ==
-; @return 1 if equal 0 otherwise
- 
+; * ==
+; * @return 1 if equal 0 otherwise
 ; int eq(const Number *_lhs, const Number *_rhs)
 proc eq
 	pusha
 	popa
+	ret
 endp eq
 
+; Docs; void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res)
+proc _mult
+	pusha
+	popa
+	ret
+endp _mult
+
 ; Docs
-; Helper method for divide, computes the quotient in _res
-; A greedy method.
-; @param _q_y helper variable
-; @param _res quotient
-; @Complexity O(log(n^2))
- 
-; void _div_helper(const Number *_lhs, const Number *_rhs, Number *restrict _q_y, Number *_res)
+; * helper method for divide, computes the quotient in _res
+; * @param _q_y helper variable
+; * @param _res quotient
+; * @Complexity O(log(n^2))
+; void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y, Number *_res)
 proc _div_helper
 	pusha
 	popa
+	ret
 endp _div_helper
 
+; Docs; void _div(const Number *_lhs, const Number *_rhs, Number *_res)
+proc _div
+	pusha
+	popa
+	ret
+endp _div
+
 ; Docs
-; Modulo of two numbers _lhs mod _rhs. stored in _res
-; @Complexity: O(log^2(n))
- 
+; * Modulo of two numbers _lhs mod _rhs. stored in _res
+; * @Complexity: O(log^2(n))
 ; void _modulo(const Number *_lhs, const Number *_rhs, Number *_res)
 proc _modulo
 	pusha
 	popa
+	ret
 endp _modulo
 
 ; Docs
-; find the msb bit of an integer
-; @return the msb index
-; @Complexity O(log(n))
- 
+; * find the msb bit of an integer
+; * @return the msb index
+; * @Complexity O(log(n))
 ; int _find_msb(uint8_t a)
 proc _find_msb
 	pusha
 	popa
+	ret
 endp _find_msb
 
 ; Docs
-; The modular exponentiation (_exp_base)**(_exp) mod _base. Stored in _res
-; @Comlexitiy O(log^3(n))
- 
-; void _modular_exp(const Number  *_exp_base, const Number *_exp, const Number *_base, Number  *_res)
+; * The modular exponentiation (_exp_base)**(_exp) mod _base. Stored in _res
+; * @Comlexitiy O(log^3(n))
+; void _modular_exp(const Number *_exp_base, const Number *_exp, const Number*_base, Number *_res)
 proc _modular_exp
 	pusha
 	popa
+	ret
 endp _modular_exp
 
 ; Docs
-; shift right
-; @param _ptr number to shift
-; @param _bits_shift 0-8
-; @Complexity: O(log(n))
- 
+; * shift right
+; * @param _ptr number to shift
+; * @param _bits_shift 0-8
+; * @Complexity: O(log(n))
 ; void _shift_right(const Number *_ptr, Number *_res, int _bytes_shift, int_bits_shift)
 proc _shift_right
 	pusha
 	popa
+	ret
 endp _shift_right
 
 ; Docs
-; Compose a number to the form (u*2^s) where u is odd
-; @param _ptr base
-; @param _u odd
-; @param _exp power
-; @Complexity O(log(n))
- 
+; * Compose a number to the form (u*2^s) where u is odd
+; * @param _ptr base
+; * @param _u odd
+; * @param _exp power
+; * @Complexity O(log(n))
 ; void _compose(const Number *_ptr, Number *_u, Number *_exp, int *_pow)
 proc _compose
 	pusha
 	popa
+	ret
 endp _compose
 
 ; Docs
-; Find s,t such that a*s+b*t=gcd(a,b), assume _a > _b
-; @Complexity O(log^3(n))
- 
+; * Find s,t such that a*s+b*t=gcd(a,b), assume _a > _b
+; * @Complexity O(log^3(n))
 ; void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number*_s, Number *_t)
 proc _extended_euclid
 	pusha
 	popa
+	ret
 endp _extended_euclid
 
 ; Docs
-; Find the multiplicative inverse of _ptr mod _base
-; @param _prt number to find its inverse
-; @param _res result stored in _res
-; @param _base modulo base
-; @Complexity O(log^3(n))
- 
+; * Find the multiplicative inverse of _ptr mod _base
+; * @param _prt number to find its inverse
+; * @param _res result stored in _res
+; * @param _base modulo base
+; * @Complexity O(log^3(n))
 ; void _inverse(const Number *_ptr, const Number *_base, Number *_res)
 proc _inverse
 	pusha
 	popa
+	ret
 endp _inverse
 
 ; Docs
-; generate a random number in the range 1,...,_upper_bound - 1
-; @param _upper_bound range upper bound
-; @param _res the result is stored in _res
- 
+; * generate a random number in the range 1,...,_upper_bound - 1
+; * @param _upper_bound range upper bound
+; * @param _res the result is stored in _res
 ; void _random(const Number *_upper_bound, Number *_res)
 proc _random
 	pusha
 	popa
+	ret
 endp _random
 
 
