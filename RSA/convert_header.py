@@ -25,6 +25,18 @@ exit:
     int 21h
 END start
 """
+
+ARGS_MACROS = """
+arg1 equ [bp+4]
+arg2 equ [bp+6]
+arg3 equ [bp+8]
+arg4 equ [bp+10]
+arg5 equ [bp+12]
+lcl1 equ [bp-2]
+lcl2 equ [bp-4]
+lcl3 equ [bp-6]
+lcl4 equ [bp-8]
+"""
 class Parser():
     def __init__(self, path):
         self.__path = path
@@ -71,7 +83,8 @@ class Parser():
                                  +",'$'\n"
             else:
                 self.__result += name + " equ " + value + "d\n"
-        self.__result += "\n"
+
+        self.__result += "\n"+ARGS_MACROS+"\n"
 
     def __parse_function_declaration(self):
         pattern = "((/\*\*([^/]*\n?\*?)*\*/)* *\n*((void|int|char|long) +([" \
@@ -94,7 +107,9 @@ class Parser():
             self.__result += "; " + decl.replace("\n", "").replace("\t",
                                                                       "")+"\n"
             self.__result += "proc " \
-                             ""+name+"\n"+"\tpusha\n\tpopa\n\tret\n"+"endp "+name
+                             ""+name+"\n"+"\tpusha\n\tmov bp, sp\n\tsub sp, " \
+                                          "8\n\tadd sp, 8\n" \
+                                          "\tpopa\n\tret\n"+"endp "+name
             self.__result += "\n\n"
 
     def __parse_function_declarations(self):

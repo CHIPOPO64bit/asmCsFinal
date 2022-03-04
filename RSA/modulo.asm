@@ -19,13 +19,25 @@ DATASEG
 ; #include <time.h>
 
 ; macros
-_DEFAULT_SIZE equ 70d
+_DEFAULT_SIZE equ 36d
 _MAX_STRING equ 31d
 _MAX_SEGMENT equ 32d
 _CARRY_MASK equ 255d
 _CARRY_MASK_LENGTH equ 8d
 _BASE_UNIT equ 8d
-_AF db "asfasf \nasasgasg",'$'
+_zero dw _DEFAULT_SIZE dup(0)
+_one dw _DEFAULT_SIZE dup(1)
+_arr dw 5d, 255, 255, 12415, 1024, 23
+_brr dw 5d, 255, 255, 12415, 1024, 23
+arg1 equ [bp+4]
+arg2 equ [bp+6]
+arg3 equ [bp+8]
+arg4 equ [bp+10]
+arg5 equ [bp+12]
+lcl1 equ [bp-2]
+lcl2 equ [bp-4]
+lcl3 equ [bp-6]
+lcl4 equ [bp-8]
 
 CODESEG
 
@@ -35,38 +47,147 @@ CODESEG
 ; * @Complexity O(log(n))
 ; void Init(Number *_ptr)
 proc Init
-	pusha
-	popa
-	ret
+	; init regs
+	push bp
+	mov bp, sp
+	push offset _zero
+	push arg1
+	call _copy
+	pop bp
+	ret 2d
 endp Init
 
+
+proc _print_digit
+	push bp
+	mov bp, sp
+	; save regs
+	push cx
+	push dx
+	push ax
+	push bx
+	; save arg
+	xor ax, ax
+	mov ax, arg1
+	xor cx, cx
+	xor dx, dx
+	; find all digits
+	_find_digits:
+		mov bx, 10d
+		; compute the current digit (arg1 mod 10)
+		div bx
+		; arg1 mod 10
+		push dx
+		; increment counter
+		inc cx
+		; init dx
+		xor dx, dx
+		; check if we found all digits
+		cmp ax, 0
+		jne _find_digits
+
+	_print_digits:
+		; store current value to dx
+		pop dx
+		; make digit
+		add dx, 48d
+		; print character
+		mov ah, 02h
+		int 21h
+		cmp cx, 0
+		dec cx
+		jne _print_digits
+	; print space
+	mov dx, 32d
+	mov ah, 02h
+	int 21h
+	; restore regs
+	pop bx
+	pop ax
+	pop dx
+	pop cx
+	pop bp
+	ret 2d
+endp _print_digit
 ; Docs
 ; * prints _ptr
 ; * @param _ptr number pointer
 ; * @Complexity O(log(n))
 ; void _print_number(const Number *_ptr)
 proc _print_number
-	pusha
-	popa
-	ret
+	push bp
+	mov bp, sp
+	push cx
+	push ax
+	push si
+	; init regs
+	xor cx, cx
+	xor ax, ax
+	xor si, si
+	; set si to point to array and store size in ax
+	mov si, arg1
+	mov ax, [si]
+	; set si to last digit (msb)
+	add si, 2d ; first digit
+	add si, ax
+	add si, ax
+	sub si, 2d
+	; set counter to array size
+	mov cx, ax
+
+	; print digits
+	dig:
+		push [si]
+		call _print_digit
+		sub si, 2d
+	loop dig
+	pop si
+	pop ax
+	pop cx
+	pop bp
+	ret 2d
 endp _print_number
 
 ; Docs
-; * @return max(a,b)
+; * @return max(a,b) in ax
 ; int _max(int a, int b)
 proc _max
-	pusha
-	popa
-	ret
+	push bp
+	mov bp, sp
+	push bx
+	mov ax, arg1
+	mov bx, arg2
+	cmp ax, bx
+	JB max_is_bx
+	jmp _max_end
+	max_is_bx:
+		mov ax, bx
+		jmp _max_end
+	_max_end:
+	pop bx
+	pop bp
+	ret 4d
 endp _max
 
 ; Docs
-; * @return min(a,b)
-; int _min(int a, int b)
+; * @return min(a,b) in ax
+; int _min(unsgined int a, unsigned int b)
 proc _min
-	pusha
-	popa
-	ret
+	push bp
+	mov bp, sp
+	push bx
+	mov ax, arg1
+	mov bx, arg2
+	cmp ax, bx
+	JA min_is_bx
+	jmp _min_end
+	min_is_bx:
+		mov ax, bx
+		jmp _min_end
+	_min_end:
+	pop bx
+	pop bp
+	ret 4d
 endp _min
 
 ; Docs
@@ -77,6 +198,9 @@ endp _min
 ; void _add(const Number *_lhs, const Number *_rhs, Number *_res, int_byte_shift, int _bit_shift)
 proc _add
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _add
@@ -89,6 +213,9 @@ endp _add
 ; void _neg(const Number *_ptr, Number *_res)
 proc _neg
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _neg
@@ -100,6 +227,9 @@ endp _neg
 ; void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,  int bits)
 proc _sub
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _sub
@@ -109,44 +239,158 @@ endp _sub
 ; * @Complexity O(log(n))
 ; void _copy(Number *_lhs, const Number *_rhs)
 proc _copy
-	pusha
-	popa
-	ret
+		; init regs
+	push bp
+	mov bp, sp
+	push si
+	push di
+	push cx
+	push bx
+
+	xor cx, cx
+	xor si, si
+	xor di, di
+
+	; copy args into arg1
+	mov cx, _DEFAULT_SIZE
+	mov si, arg1
+	mov di, arg2
+	move_from:
+		mov bx, [di]
+		mov [si], bx
+		add si, 2d
+		add di, 2d
+	loop move_from
+	; restore regs
+	pop bx
+	pop cx
+	pop di
+	pop si
+	pop bp
+	ret 4d
 endp _copy
 
 ; Docs
 ; * @return _lhs > _rhs
 ; * @Complexity O(log(n))
-; int gt(const Number *_lhs, const Number *_rhs)
-proc gt
-	pusha
-	popa
-	ret
-endp gt
+; int _gt(const Number *_lhs, const Number *_rhs)
+proc _gt
+	; init
+	push bp
+	mov bp, sp
+	push bx
+	push si
+	push di
+	push cx
+	; store addresses in regs
+	mov si, arg1
+	mov di, arg2
+	; compare lengths
+	mov ax, [si]
+	mov bx, [di]
+	cmp ax, bx
+	JA _lhs_bigger_than_rhs
+	JB _rhs_bigger_than_lhs
+	
+	mov cx, ax
+	; set si and di to last digit (add length words which is 2length bytes)
+	add ax, ax
+	add si, ax
+	add di, ax
+	sub si, 2d
+	sub di, 2d
+	
+	radix_compare:
+		mov ax, [si]
+		mov bx, [di]
+		cmp ax, bx
+		JA _lhs_bigger_than_rhs
+		JB _rhs_bigger_than_lhs
+		sub si, 2d
+		sub di, 2d
+	loop radix_compare
+	xor ax, ax ; equal
+	jmp end_gt
+	_lhs_bigger_than_rhs:
+		xor ax, ax
+		mov ax, 1d ; true
+		jmp end_gt
+	_rhs_bigger_than_lhs:
+		xor ax, ax ; false
+	; restore regs
+	end_gt:
+	pop cx
+	pop di
+	pop si
+	pop bx
+	pop bp
+	ret 4d
+endp _gt
 
 ; Docs
 ; * @return _lhs >= _rhs
 ; * @Complexity O(log(n))
 ; int ge(const Number *_lhs, const Number *_rhs)
-proc ge
-	pusha
-	popa
-	ret
-endp ge
+ proc _ge
+	push bp
+	mov bp, sp
+	; _lhs >= _rhs iff !(_rhs > _lhs)
+	push arg1
+	push arg2
+	call _gt
+	xor ax, 1d ; toggle result
+	pop bp
+	ret 4d
+endp _ge
 
 ; Docs
 ; * ==
 ; * @return 1 if equal 0 otherwise
 ; int eq(const Number *_lhs, const Number *_rhs)
-proc eq
-	pusha
-	popa
-	ret
-endp eq
+proc _eq
+	; init
+	push bp
+	mov bp, sp
+	push bx
+	push si
+	push di
+	push cx
+	; store addresses in regs
+	mov si, arg1
+	mov di, arg2
+	mov cx, [si]
+	inc cx ; compare lengths at first
+	
+	compare_bytes: ; compare current digit / length
+		mov ax, [si]
+		mov bx, [di]
+		cmp ax, bx
+		JNE _different_numbers
+		add si, 2d
+		add di, 2d
+		xor ax, ax
+	loop compare_bytes
+	
+	mov ax, 1d
+	jmp end_eq
+	_different_numbers:
+		xor ax, ax ; false
+	; restore regs
+	end_eq:
+	pop cx
+	pop di
+	pop si
+	pop bx
+	pop bp
+	ret 4d
+endp _eq
 
 ; Docs; void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res)
 proc _mult
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _mult
@@ -159,6 +403,9 @@ endp _mult
 ; void _div_helper(const Number *_lhs, const Number *_rhs, Number *_q_y, Number *_res)
 proc _div_helper
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _div_helper
@@ -166,6 +413,9 @@ endp _div_helper
 ; Docs; void _div(const Number *_lhs, const Number *_rhs, Number *_res)
 proc _div
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _div
@@ -176,6 +426,9 @@ endp _div
 ; void _modulo(const Number *_lhs, const Number *_rhs, Number *_res)
 proc _modulo
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _modulo
@@ -187,6 +440,9 @@ endp _modulo
 ; int _find_msb(uint8_t a)
 proc _find_msb
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _find_msb
@@ -197,6 +453,9 @@ endp _find_msb
 ; void _modular_exp(const Number *_exp_base, const Number *_exp, const Number*_base, Number *_res)
 proc _modular_exp
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _modular_exp
@@ -209,6 +468,9 @@ endp _modular_exp
 ; void _shift_right(const Number *_ptr, Number *_res, int _bytes_shift, int_bits_shift)
 proc _shift_right
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _shift_right
@@ -222,6 +484,9 @@ endp _shift_right
 ; void _compose(const Number *_ptr, Number *_u, Number *_exp, int *_pow)
 proc _compose
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _compose
@@ -232,6 +497,9 @@ endp _compose
 ; void _extended_euclid(const Number *_a, const Number *_b, Number *_gcd, Number*_s, Number *_t)
 proc _extended_euclid
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _extended_euclid
@@ -245,6 +513,9 @@ endp _extended_euclid
 ; void _inverse(const Number *_ptr, const Number *_base, Number *_res)
 proc _inverse
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _inverse
@@ -256,6 +527,9 @@ endp _inverse
 ; void _random(const Number *_upper_bound, Number *_res)
 proc _random
 	pusha
+	mov bp, sp
+	sub sp, 8
+	add sp, 8
 	popa
 	ret
 endp _random
@@ -264,7 +538,9 @@ endp _random
 start:
     mov ax, @data
     mov ds, ax
-    
+
+	
+
 exit:
     mov ax, 4c00h
     int 21h
