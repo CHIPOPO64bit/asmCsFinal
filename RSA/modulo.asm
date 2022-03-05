@@ -300,8 +300,6 @@ proc _add ; change code to db instead of dw
 	; set them to first digit
 	mov al, [di]
 	xor ah, ah
-	push ax
-	call _print_digit
 	inc si
 	inc di
 	inc _res_ptr
@@ -355,10 +353,6 @@ proc _add ; change code to db instead of dw
 			inc _res_ptr
 			inc _idx
 	loop add_digits
-			push 10d
-			call _print_char
-			push 10d
-			call _print_char
 	mov ax, _max_length
 	; take care of overflow 
 	; push 97d
@@ -753,11 +747,11 @@ start:
 	push offset _arr
 	call _print_number
 	;mov [byte ptr _brr +1], 1d
-	push 0d
+	push 1d
 	push 0d
 	push offset _crr
-	push offset _brr
 	push offset _arr
+	push offset _brr
 	call _add
 	push offset _crr
 	call _print_number
