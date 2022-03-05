@@ -28,7 +28,7 @@ _CARRY_MASK_LENGTH equ 8d
 _BASE_UNIT equ 8d
 _zero db _DEFAULT_SIZE dup(0)
 _one db _DEFAULT_SIZE dup(1)
-_arr db _DEFAULT_SIZE dup(255); 6d, 255, 255, 255, 255, 255, 255,0
+_arr db _DEFAULT_SIZE dup(0); 6d, 255, 255, 255, 255, 255, 255,0
 _brr db _DEFAULT_SIZE dup(0); 6d, 255, 255, 255, 255, 255, 255,0
 _crr db _DEFAULT_SIZE dup(0)
 arg1 equ [word ptr bp+4]
@@ -738,23 +738,24 @@ start:
 	; call _copy
 	; push lcl1
 	; call _print_number
-	mov [_brr], _effective_size
-	mov [byte ptr _brr + 1], 1d
-	push offset _brr
-	call _print_number
+	; mov [_brr], 1d
+	; mov [byte ptr _brr + 1], 1d
+	; push offset _brr
+	; call _print_number
 
-	mov [_arr], _effective_size
-	push offset _arr
-	call _print_number
-	;mov [byte ptr _brr +1], 1d
-	push 1d
-	push 0d
-	push offset _crr
-	push offset _arr
-	push offset _brr
-	call _add
-	push offset _crr
-	call _print_number
+	; mov [_arr], 1d
+	; mov [byte ptr _arr + 1], 1d
+	; push offset _arr
+	; call _print_number
+	; ;mov [byte ptr _brr +1], 1d
+	; push 7d
+	; push 35d
+	; push offset _crr
+	; push offset _arr
+	; push offset _brr
+	; call _add
+	; push offset _crr
+	; call _print_number
 
 	
 
