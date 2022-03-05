@@ -8,7 +8,7 @@
 .286
 IDEAL
 MODEL small
-STACK 100h
+STACK 9999h
 
 DATASEG
 
@@ -28,9 +28,9 @@ _CARRY_MASK_LENGTH equ 8d
 _BASE_UNIT equ 8d
 _zero db _DEFAULT_SIZE dup(0)
 _one db _DEFAULT_SIZE dup(1)
-_arr db 10d, 255, 255, 255, 255, 23, 1, 2, 3,4,5,6,10,2
-_brr db 5d, 5, 255, 255, 25, 23
-_crr db 5d, 225, 255, 255, 255, 23
+_arr db _DEFAULT_SIZE dup(255); 6d, 255, 255, 255, 255, 255, 255,0
+_brr db _DEFAULT_SIZE dup(0); 6d, 255, 255, 255, 255, 255, 255,0
+_crr db _DEFAULT_SIZE dup(0)
 arg1 equ [word ptr bp+4]
 arg2 equ [word ptr bp+6]
 arg3 equ [word ptr bp+8]
@@ -60,6 +60,7 @@ _carry equ [word ptr bp - 6]
 _temp equ [word ptr bp - 8]
 _max_length equ [word ptr bp - 10]
 _res_ptr equ [word ptr bp - 12]
+_idx equ [word ptr bp - 16]
 
 CODESEG
 
@@ -236,14 +237,21 @@ endp _min
 ; * @Complexity: O(log(n))
 ; void _add(const Number *_lhs, const Number *_rhs, Number *_res, int_byte_shift, int _bit_shift)
 proc _add ; change code to db instead of dw
+
 	push bp
 	mov bp, sp
+	
 	sub sp, 20
 	; allocate _rhs_copied and _lhs_copied
 	sub sp, _DEFAULT_SIZE
 	mov _lhs_copied, sp
 	sub sp, _DEFAULT_SIZE
 	mov _rhs_copied, sp
+	; save regs
+	push di
+	push si
+	push bx
+	push ax
 	; copy rhs to rhs_copied and lhs_copied to lhs
 	; lhs
 	push _lhs 
@@ -254,14 +262,16 @@ proc _add ; change code to db instead of dw
 	push _rhs_copied
 	call _copy
 
-	mov carry, 0
-	mov temp, 0
-	mov max_length, 0
+	mov _carry, 0
+	mov _temp, 0
+	mov _max_length, 0
 	mov si, _lhs_copied
 	mov di, _rhs_copied
 	; compute max (rhs length +byte_shift,lhs length)
-	push [si]
-	mov ax, [di]
+	mov al, [si]
+	xor ah, ah
+	push ax
+	mov al, [di]
 	add ax, _byte_shift
 	push ax
 	call _max
@@ -269,50 +279,118 @@ proc _add ; change code to db instead of dw
 	push ax
 	push _effective_size
 	call _min
-	mov cx, ax
+	; loop counter
+	mov cx, ax 
+	mov _max_length, ax
+	; init _res
 	push _res
-	pop 
-
-	; push arg3
-	; pop lcl5 ; _res
-	; push lcl5
-	; call INIT
-	; mov lcl6, 0d ; i = 0
-	; add_digits:
-	; 	mov ax, arg4
-	; 	cmp lcl6, ax
-	; 	JA addition_result
-	; 	; zero padded case
-	; 	push [si]
-	; 	pop lcl4
-	; 	jmp end_byte_shift_cases
-	; 	addition_result:
-	; 		push [si]
-	; 		pop lcl4
-	; 		mov ax, arg4
-	; 		sub di, arg4
-	; 		sub di, arg4
-	; 		; shl ptr_r[i-byte_shift]
-	; 		;mov lcl_dword, [di]
-			
-	; 		push cx
-	; 		mov cx, arg5 ; bit shift in range 0-8
-	; 		shl ax, cl
-	; 		pop cx
-	; 	end_byte_shift_cases:
-
-	; 	add si, 2d
-	; 	add di, 2d
-
-	; loop add_digits
+	pop _res_ptr
+	push _res_ptr
+	call Init
+	; set res length to be max length
+	mov ax, _max_length
+	; set si to be res
+	push si
+	mov si, _res_ptr
+	mov [si], al
+	pop si
+	; i = 0
+	mov _idx, 0
+	; these next lines add the two numbers
+	; set them to first digit
+	mov al, [di]
+	xor ah, ah
+	push ax
+	call _print_digit
+	inc si
+	inc di
+	inc _res_ptr
+	add_digits:
+		
+		mov ax, _idx
+		cmp ax, _byte_shift
+		JAE no_zero_padded_case
+			; padding
+			; move clear ptr_l[i] to temp
+			mov al, [si]
+			xor ah, ah
+			mov _temp, ax
+		jmp end_padding_case
+		no_zero_padded_case:
+			mov al, [si]
+			xor ah, ah
+			mov _temp, ax
+			sub di, _byte_shift
+			mov bl, [di]
+			xor bh, bh
 	
+			add di, _byte_shift
+			
+			; temp += ptr_r[i - _byte_shift] << _bit_shift
+			push cx ; save cx value
+			mov cx, _bit_shift
+			shl bx, cl
+			pop cx
+			
+			add _temp, bx
+			
+			
+			; temp += carry
+			mov bx, _carry
+			add _temp, bx
+		end_padding_case:
+			; ptr_res[i] = (8 lsb bits) temp
+			push si
+			mov si, _res_ptr ; si stores res
+			mov ax, _temp
+			mov [si], al ; 8 lsb bits
+			pop si ; si stores lhs
+			; carry stores overflowed bits
+			mov al, ah
+			xor ah, ah
+			mov _carry, ax ; 8 lsb bits
+			; move one digit forwards
+			inc di
+			inc si
+			inc _res_ptr
+			inc _idx
+	loop add_digits
+			push 10d
+			call _print_char
+			push 10d
+			call _print_char
+	mov ax, _max_length
+	; take care of overflow 
+	; push 97d
+	; call _print_char
 
+	cmp ax, _effective_size
+	JAE free_regs_add
+	cmp _carry, 0d
+	JE free_regs_add
+	mov si, _res
+	; set length of res to max length + 1
+	mov ax, _max_length
+	inc ax
+	mov [si], al
+	; set last digit to be carry
+	add si, _max_length
+	inc si
+	mov ax, _carry
+	mov [si], al
 
-
+	free_regs_add:
 	; deallocate them
+	pop ax
+	pop bx
+	pop si
+	pop di
 	add sp, _DEFAULT_SIZE
 	add sp, _DEFAULT_SIZE
 	add sp, 20
+
+	; restore regs
+
 	pop bp
 	ret 10d
 endp _add
@@ -654,6 +732,9 @@ endp _random
 start:
     mov ax, @data
     mov ds, ax
+	mov [_zero], _EFFECTIVE_SIZE
+	push offset _zero
+	call _print_number
 	; push bp
 	; mov bp, sp
 	; sub sp, _DEFAULT_SIZE
@@ -663,12 +744,23 @@ start:
 	; call _copy
 	; push lcl1
 	; call _print_number
-	push 10d
-	push 5d
+	mov [_brr], _effective_size
+	mov [byte ptr _brr + 1], 1d
+	push offset _brr
+	call _print_number
+
+	mov [_arr], _effective_size
+	push offset _arr
+	call _print_number
+	;mov [byte ptr _brr +1], 1d
+	push 0d
+	push 0d
 	push offset _crr
 	push offset _brr
 	push offset _arr
 	call _add
+	push offset _crr
+	call _print_number
 
 	
 
