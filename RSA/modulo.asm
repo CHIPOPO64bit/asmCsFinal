@@ -20,24 +20,46 @@ DATASEG
 
 ; macros
 _DEFAULT_SIZE equ 36d
+_EFFECTIVE_SIZE equ 35d
 _MAX_STRING equ 31d
 _MAX_SEGMENT equ 32d
 _CARRY_MASK equ 255d
 _CARRY_MASK_LENGTH equ 8d
 _BASE_UNIT equ 8d
-_zero dw _DEFAULT_SIZE dup(0)
-_one dw _DEFAULT_SIZE dup(1)
-_arr dw 5d, 255, 255, 12415, 1024, 23
-_brr dw 5d, 255, 255, 12415, 1024, 23
-arg1 equ [bp+4]
-arg2 equ [bp+6]
-arg3 equ [bp+8]
-arg4 equ [bp+10]
-arg5 equ [bp+12]
-lcl1 equ [bp-2]
-lcl2 equ [bp-4]
-lcl3 equ [bp-6]
-lcl4 equ [bp-8]
+_zero db _DEFAULT_SIZE dup(0)
+_one db _DEFAULT_SIZE dup(1)
+_arr db 10d, 255, 255, 255, 255, 23, 1, 2, 3,4,5,6,10,2
+_brr db 5d, 5, 255, 255, 25, 23
+_crr db 5d, 225, 255, 255, 255, 23
+arg1 equ [word ptr bp+4]
+arg2 equ [word ptr bp+6]
+arg3 equ [word ptr bp+8]
+arg4 equ [word ptr bp+10]
+arg5 equ [word ptr bp+12]
+lcl1 equ [word ptr bp-2]
+lcl2 equ [word ptr bp-4]
+lcl3 equ [word ptr bp-6]
+lcl4 equ [word ptr bp-8]
+lcl5 equ [word ptr bp-10]
+lcl6 equ [word ptr bp-12]
+lcl7 equ [word ptr bp-14]
+lcl8 equ [word ptr bp-16]
+lcl9 equ [word ptr bp-18]
+lcl10 equ [word ptr bp-20]
+
+; macros for _add
+_lhs equ [word ptr bp+4]
+_rhs equ [word ptr bp+6]
+_res equ [word ptr bp+8]
+_byte_shift equ [word ptr bp+10]
+_bit_shift equ [word ptr bp+12]
+
+_lhs_copied equ [word ptr bp - 2]
+_rhs_copied equ [word ptr bp - 4]
+_carry equ [word ptr bp - 6]
+_temp equ [word ptr bp - 8]
+_max_length equ [word ptr bp - 10]
+_res_ptr equ [word ptr bp - 12]
 
 CODESEG
 
@@ -57,7 +79,22 @@ proc Init
 	ret 2d
 endp Init
 
+; print char
+proc _print_char
+	push bp
+	mov bp, sp
+	push ax
+	push dx
+	mov dx, arg1
+	mov ah, 02h
+	int 21h
+	pop dx
+	pop ax
+	pop bp
+	ret 2d
+endp _print_char
 
+; print digit (base 10)
 proc _print_digit
 	push bp
 	mov bp, sp
@@ -126,21 +163,23 @@ proc _print_number
 	xor si, si
 	; set si to point to array and store size in ax
 	mov si, arg1
-	mov ax, [si]
+	xor ah, ah
+	mov al, [si]
 	; set si to last digit (msb)
-	add si, 2d ; first digit
-	add si, ax
-	add si, ax
-	sub si, 2d
+	add si, ax ; add length, last digit
 	; set counter to array size
 	mov cx, ax
 
 	; print digits
 	dig:
-		push [si]
+		xor ah, ah
+		mov al, [si]
+		push ax
 		call _print_digit
-		sub si, 2d
+		dec si
 	loop dig
+	push 10d; \n
+	call _print_char
 	pop si
 	pop ax
 	pop cx
@@ -196,13 +235,86 @@ endp _min
 ; * @param _bit_shift shift rhs <> bits
 ; * @Complexity: O(log(n))
 ; void _add(const Number *_lhs, const Number *_rhs, Number *_res, int_byte_shift, int _bit_shift)
-proc _add
-	pusha
+proc _add ; change code to db instead of dw
+	push bp
 	mov bp, sp
-	sub sp, 8
-	add sp, 8
-	popa
-	ret
+	sub sp, 20
+	; allocate _rhs_copied and _lhs_copied
+	sub sp, _DEFAULT_SIZE
+	mov _lhs_copied, sp
+	sub sp, _DEFAULT_SIZE
+	mov _rhs_copied, sp
+	; copy rhs to rhs_copied and lhs_copied to lhs
+	; lhs
+	push _lhs 
+	push _lhs_copied
+	call _copy
+	; rhs
+	push _rhs
+	push _rhs_copied
+	call _copy
+
+	mov carry, 0
+	mov temp, 0
+	mov max_length, 0
+	mov si, _lhs_copied
+	mov di, _rhs_copied
+	; compute max (rhs length +byte_shift,lhs length)
+	push [si]
+	mov ax, [di]
+	add ax, _byte_shift
+	push ax
+	call _max
+	; compute min (prev, DEFAULT_SIZE)
+	push ax
+	push _effective_size
+	call _min
+	mov cx, ax
+	push _res
+	pop 
+
+	; push arg3
+	; pop lcl5 ; _res
+	; push lcl5
+	; call INIT
+	; mov lcl6, 0d ; i = 0
+	; add_digits:
+	; 	mov ax, arg4
+	; 	cmp lcl6, ax
+	; 	JA addition_result
+	; 	; zero padded case
+	; 	push [si]
+	; 	pop lcl4
+	; 	jmp end_byte_shift_cases
+	; 	addition_result:
+	; 		push [si]
+	; 		pop lcl4
+	; 		mov ax, arg4
+	; 		sub di, arg4
+	; 		sub di, arg4
+	; 		; shl ptr_r[i-byte_shift]
+	; 		;mov lcl_dword, [di]
+			
+	; 		push cx
+	; 		mov cx, arg5 ; bit shift in range 0-8
+	; 		shl ax, cl
+	; 		pop cx
+	; 	end_byte_shift_cases:
+
+	; 	add si, 2d
+	; 	add di, 2d
+
+	; loop add_digits
+	
+
+
+
+	; deallocate them
+	add sp, _DEFAULT_SIZE
+	add sp, _DEFAULT_SIZE
+	add sp, 20
+	pop bp
+	ret 10d
 endp _add
 
 ; Docs
@@ -239,29 +351,34 @@ endp _sub
 ; * @Complexity O(log(n))
 ; void _copy(Number *_lhs, const Number *_rhs)
 proc _copy
-		; init regs
+	; init regs
 	push bp
 	mov bp, sp
 	push si
 	push di
 	push cx
 	push bx
+	push ax
 
 	xor cx, cx
 	xor si, si
 	xor di, di
-
+	xor bx, bx
+	xor ax, ax
+	
 	; copy args into arg1
 	mov cx, _DEFAULT_SIZE
 	mov si, arg1
 	mov di, arg2
 	move_from:
-		mov bx, [di]
-		mov [si], bx
-		add si, 2d
-		add di, 2d
+		mov bl, [di]
+		mov [si], bl
+		mov al, [si]
+		inc si
+		inc di
 	loop move_from
 	; restore regs
+	pop ax
 	pop bx
 	pop cx
 	pop di
@@ -282,32 +399,31 @@ proc _gt
 	push si
 	push di
 	push cx
+	xor ax, ax
+	xor bx, bx
 	; store addresses in regs
 	mov si, arg1
 	mov di, arg2
 	; compare lengths
-	mov ax, [si]
-	mov bx, [di]
-	cmp ax, bx
+	mov al, [si]
+	mov bl, [di]
+	cmp al, bl
 	JA _lhs_bigger_than_rhs
 	JB _rhs_bigger_than_lhs
 	
 	mov cx, ax
-	; set si and di to last digit (add length words which is 2length bytes)
-	add ax, ax
+	; set si and di to last digit
 	add si, ax
 	add di, ax
-	sub si, 2d
-	sub di, 2d
 	
 	radix_compare:
-		mov ax, [si]
-		mov bx, [di]
-		cmp ax, bx
+		mov al, [si]
+		mov bl, [di]
+		cmp al, bl
 		JA _lhs_bigger_than_rhs
 		JB _rhs_bigger_than_lhs
-		sub si, 2d
-		sub di, 2d
+		dec si
+		dec di
 	loop radix_compare
 	xor ax, ax ; equal
 	jmp end_gt
@@ -355,22 +471,22 @@ proc _eq
 	push si
 	push di
 	push cx
+	xor cx, cx
 	; store addresses in regs
 	mov si, arg1
 	mov di, arg2
-	mov cx, [si]
+	mov cl, [si]
 	inc cx ; compare lengths at first
 	
 	compare_bytes: ; compare current digit / length
-		mov ax, [si]
-		mov bx, [di]
-		cmp ax, bx
+		mov al, [si]
+		mov bl, [di]
+		cmp al, bl
 		JNE _different_numbers
-		add si, 2d
-		add di, 2d
+		inc si
+		inc di
 		xor ax, ax
 	loop compare_bytes
-	
 	mov ax, 1d
 	jmp end_eq
 	_different_numbers:
@@ -538,10 +654,27 @@ endp _random
 start:
     mov ax, @data
     mov ds, ax
+	; push bp
+	; mov bp, sp
+	; sub sp, _DEFAULT_SIZE
+	; mov lcl1, sp
+	; push offset _arr
+	; push lcl1
+	; call _copy
+	; push lcl1
+	; call _print_number
+	push 10d
+	push 5d
+	push offset _crr
+	push offset _brr
+	push offset _arr
+	call _add
 
 	
 
 exit:
     mov ax, 4c00h
     int 21h
+
+
 END start
