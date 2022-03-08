@@ -47,7 +47,7 @@ lcl8 equ [word ptr bp-16]
 lcl9 equ [word ptr bp-18]
 lcl10 equ [word ptr bp-20]
 
-; macros for _add
+; useful macros for _add
 _lhs equ [word ptr bp+4]
 _rhs equ [word ptr bp+6]
 _res equ [word ptr bp+8]
@@ -61,6 +61,9 @@ _temp equ [word ptr bp - 8]
 _max_length equ [word ptr bp - 10]
 _res_ptr equ [word ptr bp - 12]
 _idx equ [word ptr bp - 16]
+
+; usefull macros for mult
+_mask equ [word ptr bp - 6]
 
 CODESEG
 
@@ -167,9 +170,9 @@ proc _print_number
 	xor ah, ah
 	mov al, [si]
 	; set si to last digit (msb)
-	add si, _effective_size ; add length, last digit
+	add si, ax ; add length, last digit
 	; set counter to array size
-	mov cx, _effective_size
+	mov cx, ax
 
 	; print digits
 	dig:
@@ -252,6 +255,7 @@ proc _add ; change code to db instead of dw
 	push si
 	push bx
 	push ax
+	push cx
 	; copy rhs to rhs_copied and lhs_copied to lhs
 	; lhs
 	push _lhs 
@@ -375,6 +379,7 @@ proc _add ; change code to db instead of dw
 
 	free_regs_add:
 	; deallocate them
+	pop cx
 	pop ax
 	pop bx
 	pop si
@@ -669,12 +674,96 @@ endp _eq
 
 ; Docs; void _mult(const Number *_lhs, const Number *_rhs, Number *restrict _res)
 proc _mult
-	pusha
+
+	push bp
 	mov bp, sp
 	sub sp, 8
+	push si
+	push di
+	push ax
+	push cx
+	push bx
+	; copy lhs and rhs
+	sub sp, _default_size
+	mov _lhs_copied, sp
+	sub sp, _default_size
+	mov _rhs_copied, sp
+	; copy lhs
+	push _lhs
+	push _lhs_copied
+	call _copy
+	; copy rhs
+	push _rhs
+	push _rhs_copied
+	call _copy	
+	; init result
+	push _res
+	call INIT
+	
+	mov si, _lhs_copied
+	mov di, _rhs_copied
+
+	; store lhs._length
+	mov cl, [byte ptr si]
+	inc si
+	xor ch, ch
+	; if no length, just return
+	cmp cx, 0d
+	JE end_mult_finaly
+	xor ax, ax ; store i in ah, j in al
+
+	mult_shifted:
+		
+		mov _mask, 1d
+		xor al, al ; j = 0
+		inner_mult_loop:
+			
+			cmp al, _base_unit
+			JAE end_inner_mult_loop
+			
+			; if the current bit is not zero
+			xor bh, bh
+			mov bl, [byte ptr si]
+			and bx, _mask
+			cmp bx, 0d
+			JE no_addition_in_mult 
+			
+			; perform addition
+			mov bl, al
+			xor bh, bh
+			push bx ; push bit_shift
+
+			mov bl, ah
+			xor bh, bh
+			push bx ; push byte_shift
+			; push res, rhs_copied, res
+			push _res
+			push _rhs_copied
+			push _res
+			call _add
+			
+			no_addition_in_mult:
+				inc al
+				shl _mask, 1d ; mask = mask + mask
+		jmp inner_mult_loop
+		end_inner_mult_loop:
+		inc si
+		inc ah
+	loop mult_shifted
+
+	end_mult_finaly:
+	; deallocate copies
+	add sp, _default_size 
+	add sp, _default_size
+	; restore regs
+	pop bx
+	pop cx
+	pop ax
+	pop di
+	pop si
 	add sp, 8
-	popa
-	ret
+	pop bp
+	ret 6d
 endp _mult
 
 ; Docs
@@ -820,7 +909,7 @@ endp _random
 start:
     mov ax, @data
     mov ds, ax
-	mov [_zero], 0d
+	mov [_zero], 1d
 	push offset _zero
 	mov [_one], 1d
 	mov [byte ptr _one+1], 1d
@@ -856,12 +945,11 @@ start:
 	; push offset _arr
 	; call _print_number
 
-	push 0d
-	push 0d
+
 	push offset _arr
-	push offset _brr
-	push offset _crr
-	call _sub
+	push offset _arr
+	push offset _zero
+	call _mult
 	push offset _arr
 	call _print_number
 
