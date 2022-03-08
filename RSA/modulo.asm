@@ -167,9 +167,9 @@ proc _print_number
 	xor ah, ah
 	mov al, [si]
 	; set si to last digit (msb)
-	add si, ax ; add length, last digit
+	add si, _effective_size ; add length, last digit
 	; set counter to array size
-	mov cx, ax
+	mov cx, _effective_size
 
 	; print digits
 	dig:
@@ -454,18 +454,60 @@ proc _sub
 	push bp
 	mov bp, sp
 	; compute neg
+	push cx
+	push si
+	push ax
+	push di
+
+	sub sp, _default_size
+	mov si, sp ; _copied
+	
+
+	; copy lhs and store in si
+	push _lhs
+	push si
+	call _copy
+	
+
+	; negate rhs and store in res
 	push _res
 	push _rhs
 	call _neg
 
-	; add neg to _lhs
+
+
+	; add _neg_rhs(res) to _lhs (si) and store in res
 	push _bit_shift
 	push _byte_shift
 	push _res
-	push _lhs
 	push _res
+	push si
 	call _add
 
+	;si = _res, first digit
+	mov si, _res
+	mov [byte ptr si], 0 ; set length = zero
+	mov di, si
+	inc si
+	; set length
+	mov ah, 1d
+	mov cx, _effective_size
+	_check_length:
+		mov al, [byte ptr si]
+		cmp al, 0d
+		JE zero_dont_update_length
+		mov [byte ptr di], ah
+		zero_dont_update_length:
+		inc ah
+		inc si
+	loop _check_length
+	; restore regs
+
+	add sp, _default_size
+	pop di
+	pop ax
+	pop si
+	pop cx
 	pop bp
 	ret 10d
 endp _sub
@@ -495,13 +537,13 @@ proc _copy
 	mov si, arg1
 	mov di, arg2
 	move_from:
-		mov bl, [di]
-		mov [si], bl
-		mov al, [si]
+		mov bl, [byte ptr di]
+		mov [byte ptr si], bl
 		inc si
 		inc di
 	loop move_from
 	; restore regs
+
 	pop ax
 	pop bx
 	pop cx
@@ -782,12 +824,45 @@ start:
 	push offset _zero
 	mov [_one], 1d
 	mov [byte ptr _one+1], 1d
+	; mov [byte ptr _arr], _effective_size
+	; mov [ byte ptr _arr + 1], 254
+	mov [byte ptr _crr], 1d
+	mov [byte ptr _crr+1], 1d
+	mov [byte ptr _brr], 1d
+	mov [byte ptr _brr+1], 4d
+
+
+	; push offset _arr
+	; push offset _crr
+	; call _neg
+	; push offset _arr
+	; call _print_number
+
+	; push 0d
+	; push 0d
+	; push offset _brr
+	; push offset _arr
+	; push offset _crr
+	; call _add
+	; push offset _brr
+	; call _print_number
 	mov [byte ptr _arr], _effective_size
-	mov [ byte ptr _arr + 1], 254
-	push offset _crr
+	; push 0d
+	; push
+	; push offset _arr
+	; push offset _arr
+	; push offset _crr
+	; call _add
+	; push offset _arr
+	; call _print_number
+
+	push 0d
+	push 0d
 	push offset _arr
-	call _neg
+	push offset _brr
 	push offset _crr
+	call _sub
+	push offset _arr
 	call _print_number
 
 	
