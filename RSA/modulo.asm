@@ -4,7 +4,7 @@
 ; All rights reserved
 
 
-
+; finish implementing all chips
 .286
 IDEAL
 MODEL small
@@ -27,8 +27,8 @@ _CARRY_MASK equ 255d
 _CARRY_MASK_LENGTH equ 8d
 _BASE_UNIT equ 8d
 _zero db _DEFAULT_SIZE dup(0)
-_one db _DEFAULT_SIZE dup(1)
-_arr db _DEFAULT_SIZE dup(0); 6d, 255, 255, 255, 255, 255, 255,0
+_one db _DEFAULT_SIZE dup(0)
+_arr db _DEFAULT_SIZE dup(255); 6d, 255, 255, 255, 255, 255, 255,0
 _brr db _DEFAULT_SIZE dup(0); 6d, 255, 255, 255, 255, 255, 255,0
 _crr db _DEFAULT_SIZE dup(0)
 arg1 equ [word ptr bp+4]
@@ -396,12 +396,52 @@ endp _add
 ; * @Complexity O(log(n))
 ; void _neg(const Number *_ptr, Number *_res)
 proc _neg
-	pusha
+	push bp
 	mov bp, sp
-	sub sp, 8
-	add sp, 8
-	popa
-	ret
+	; save regs
+	push ax
+	push cx
+	push si
+	push di
+	push bx
+	
+	mov si, _lhs
+	mov di, _rhs ; res
+	mov cx, _default_size ; copy all include length
+	xor bx, bx
+	mov bx, 1d
+	negate_digits:
+		mov al, [si]
+		not al
+		mov [di], al ; store negate
+		cmp al, 0
+		; update length if neede
+		JE no_update_length
+		push si ; store base rhs address in size
+		mov si, _rhs
+		mov [si], bl
+		pop si ; store current lhs address in si
+		no_update_length:
+		; advanced regs
+		inc si
+		inc di
+		inc bx
+	loop negate_digits
+	; add one for negation
+	push 0d
+	push 0d
+	push _rhs
+	push _rhs
+	push offset _one
+	call _add
+	; restore regs
+	pop bx
+	pop di
+	pop si
+	pop cx
+	pop ax
+	pop bp
+	ret 4d
 endp _neg
 
 ; Docs
@@ -410,12 +450,24 @@ endp _neg
 ; * @Complexity O(log(n))
 ; void _sub(const Number *_lhs, const Number *_rhs, Number *_res, int bytes,  int bits)
 proc _sub
-	pusha
+
+	push bp
 	mov bp, sp
-	sub sp, 8
-	add sp, 8
-	popa
-	ret
+	; compute neg
+	push _res
+	push _rhs
+	call _neg
+
+	; add neg to _lhs
+	push _bit_shift
+	push _byte_shift
+	push _res
+	push _lhs
+	push _res
+	call _add
+
+	pop bp
+	ret 10d
 endp _sub
 
 ; Docs
@@ -726,36 +778,17 @@ endp _random
 start:
     mov ax, @data
     mov ds, ax
-	mov [_zero], _EFFECTIVE_SIZE
+	mov [_zero], 0d
 	push offset _zero
+	mov [_one], 1d
+	mov [byte ptr _one+1], 1d
+	mov [byte ptr _arr], _effective_size
+	mov [ byte ptr _arr + 1], 254
+	push offset _crr
+	push offset _arr
+	call _neg
+	push offset _crr
 	call _print_number
-	; push bp
-	; mov bp, sp
-	; sub sp, _DEFAULT_SIZE
-	; mov lcl1, sp
-	; push offset _arr
-	; push lcl1
-	; call _copy
-	; push lcl1
-	; call _print_number
-	; mov [_brr], 1d
-	; mov [byte ptr _brr + 1], 1d
-	; push offset _brr
-	; call _print_number
-
-	; mov [_arr], 1d
-	; mov [byte ptr _arr + 1], 1d
-	; push offset _arr
-	; call _print_number
-	; ;mov [byte ptr _brr +1], 1d
-	; push 7d
-	; push 35d
-	; push offset _crr
-	; push offset _arr
-	; push offset _brr
-	; call _add
-	; push offset _crr
-	; call _print_number
 
 	
 
