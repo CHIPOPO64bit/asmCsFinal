@@ -8,7 +8,7 @@
 .286
 IDEAL
 MODEL small
-STACK 9999h
+STACK 5000h
 
 DATASEG
 
@@ -19,8 +19,8 @@ DATASEG
 ; #include <time.h>
 
 ; macros
-_DEFAULT_SIZE equ 36d
-_EFFECTIVE_SIZE equ 35d
+_DEFAULT_SIZE equ 10d
+_EFFECTIVE_SIZE equ 9d
 _MAX_STRING equ 31d
 _MAX_SEGMENT equ 32d
 _CARRY_MASK equ 255d
@@ -173,7 +173,10 @@ proc _print_number
 	add si, ax ; add length, last digit
 	; set counter to array size
 	mov cx, ax
-
+	cmp cx, 0d
+	JNE no_need_to_add
+	inc cx
+	no_need_to_add:
 	; print digits
 	dig:
 		xor ah, ah
@@ -548,12 +551,16 @@ proc _copy
 		inc di
 	loop move_from
 	; restore regs
-
+	mov si, arg1
+	mov bl, [si]
+	 xor bh, bh
+	
 	pop ax
 	pop bx
 	pop cx
 	pop di
 	pop si
+
 	pop bp
 	ret 4d
 endp _copy
@@ -677,45 +684,77 @@ proc _mult
 
 	push bp
 	mov bp, sp
-	sub sp, 8
+
+	sub sp, 20
+
+	sub sp, _DEFAULT_SIZE
+	mov _lhs_copied, sp
+	sub sp, _DEFAULT_SIZE
+	mov _rhs_copied, sp
+
 	push si
 	push di
 	push ax
 	push cx
 	push bx
 	; copy lhs and rhs
-	sub sp, _default_size
-	mov _lhs_copied, sp
-	sub sp, _default_size
-	mov _rhs_copied, sp
+	
 	; copy lhs
 	push _lhs
 	push _lhs_copied
 	call _copy
+
 	; copy rhs
 	push _rhs
 	push _rhs_copied
 	call _copy	
+
+	;push _res
+	
+
+	
+
 	; init result
 	push _res
-	call INIT
+	call Init
 	
 	mov si, _lhs_copied
 	mov di, _rhs_copied
+	
+	;push _lhs_copied
+	;call _print_number
+	
+	
+	;push _rhs_copied
+	;call _print_number
+	; push _lhs
+	; call _print_number
+	; push _rhs
+	; call _print_number
 
+	xor cx, cx
 	; store lhs._length
 	mov cl, [byte ptr si]
 	inc si
-	xor ch, ch
+
 	; if no length, just return
+	push cx
+	call _print_digit
+	push 10d
+	call _print_char
+
 	cmp cx, 0d
 	JE end_mult_finaly
 	xor ax, ax ; store i in ah, j in al
-
+	
 	mult_shifted:
+
+		;print current digit
 		
+	
 		mov _mask, 1d
 		xor al, al ; j = 0
+		
 		inner_mult_loop:
 			
 			cmp al, _base_unit
@@ -732,36 +771,51 @@ proc _mult
 			mov bl, al
 			xor bh, bh
 			push bx ; push bit_shift
-
+		
 			mov bl, ah
 			xor bh, bh
 			push bx ; push byte_shift
+			
 			; push res, rhs_copied, res
 			push _res
 			push _rhs_copied
 			push _res
 			call _add
 			
+			;push _res
+			;call _print_number
+
+			
+			
+			; push _res
+			; call _print_number
 			no_addition_in_mult:
 				inc al
 				shl _mask, 1d ; mask = mask + mask
 		jmp inner_mult_loop
 		end_inner_mult_loop:
+		; push 97d
+		; call _print_char
+		; push _rhs_copied
+		; call _print_number
 		inc si
 		inc ah
 	loop mult_shifted
 
 	end_mult_finaly:
 	; deallocate copies
-	add sp, _default_size 
-	add sp, _default_size
+	
 	; restore regs
+	
 	pop bx
 	pop cx
 	pop ax
 	pop di
 	pop si
-	add sp, 8
+
+	add sp, _default_size 
+	add sp, _default_size
+	add sp, 20d
 	pop bp
 	ret 6d
 endp _mult
@@ -909,14 +963,24 @@ endp _random
 start:
     mov ax, @data
     mov ds, ax
-	mov [_zero], 1d
-	push offset _zero
-	mov [_one], 1d
+	mov [_zero], 0d
+	;push offset _zero
+	mov [byte ptr _one], 1d
 	mov [byte ptr _one+1], 1d
+	; mov [byte ptr _one+2], 255d
+	; mov [byte ptr _one+3], 255d
 	; mov [byte ptr _arr], _effective_size
 	; mov [ byte ptr _arr + 1], 254
-	mov [byte ptr _crr], 1d
-	mov [byte ptr _crr+1], 1d
+	mov [byte ptr _crr], 9d
+	mov [byte ptr _crr+1], 255d
+	mov [byte ptr _crr+2], 255d
+	mov [byte ptr _crr+3], 255d
+	mov [byte ptr _crr+4], 255d
+	mov [byte ptr _crr+5], 255d
+	mov [byte ptr _crr+6], 255d
+	mov [byte ptr _crr+7], 255d
+	mov [byte ptr _crr+8], 255d
+	mov [byte ptr _crr+9], 255d
 	mov [byte ptr _brr], 1d
 	mov [byte ptr _brr+1], 4d
 
@@ -936,6 +1000,9 @@ start:
 	; push offset _brr
 	; call _print_number
 	mov [byte ptr _arr], _effective_size
+	
+	;push offset _arr
+	;call _print_number
 	; push 0d
 	; push
 	; push offset _arr
@@ -947,8 +1014,8 @@ start:
 
 
 	push offset _arr
-	push offset _arr
-	push offset _zero
+	push offset _crr
+	push offset _crr
 	call _mult
 	push offset _arr
 	call _print_number
