@@ -18,7 +18,7 @@ note. you have to run it on a unix environment
 ##convert headers to tasm files
 
 you can run convert_header.py in order to convert a header file into tasm api.
-I will publish more on this soon.
+    It works both on c files and h files
  
 
 

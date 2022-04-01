@@ -1014,8 +1014,8 @@ start:
 
 
 	push offset _arr
-	push offset _crr
-	push offset _crr
+	push offset _arr
+	push offset _arr
 	call _mult
 	push offset _arr
 	call _print_number
